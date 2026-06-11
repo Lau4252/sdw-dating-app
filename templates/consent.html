@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Einwilligung – StipConnect{% endblock %}
+{% block content %}
+<div class="max-w-2xl mx-auto mt-12 p-6 bg-white rounded-xl shadow">
+  <h1 class="text-2xl font-bold text-gray-900 mb-4">Willkommen bei StipConnect</h1>
+  <p class="text-gray-700 mb-4">
+    Bevor du dein Profil erstellen und andere Stipendiaten sehen kannst, brauchen wir deine ausdrückliche Einwilligung.
+  </p>
+  <div class="bg-gray-50 border border-gray-200 rounded p-4 mb-6 text-sm text-gray-700 space-y-2">
+    <p><strong>Was wird gespeichert:</strong> Name, E-Mail-Adresse, optional Foto, Telefonnummer, Studiengang, Stadt, Geburtstag, Interessen und eine kurze Biografie.</p>
+    <p><strong>Wer sieht das:</strong> Nur andere eingeloggte Mitglieder deiner Studienstiftung. Die Plattform ist durch Cloudflare Access geschützt.</p>
+    <p><strong>Wie lange:</strong> Solange du Mitglied der Stiftung bist oder bis du dein Profil löschst.</p>
+    <p><strong>Deine Rechte:</strong> Du kannst dein Profil und alle Daten jederzeit in den Einstellungen löschen (Art. 17 DSGVO).</p>
+    <p><strong>Verantwortlich:</strong> [Name deiner Studienstiftung – bitte anpassen].</p>
+  </div>
+  <form method="post" action="{% url 'consent_submit' %}">
+    {% csrf_token %}
+    <label class="flex items-start mb-6">
+      <input type="checkbox" name="consent" required class="mt-1 mr-3 h-5 w-5 text-indigo-600 rounded">
+      <span class="text-sm text-gray-700">
+        Ich willige ein, dass meine oben genannten Daten auf StipConnect gespeichert und für andere Mitglieder sichtbar werden.
+        Die Einwilligung ist freiwillig und kann jederzeit widerrufen werden.
+      </span>
+    </label>
+    <div class="flex gap-4">
+      <button type="submit" class="bg-indigo-600 text-white px-6 py-2 rounded hover:bg-indigo-700 transition">
+        Einwilligen und fortfahren
+      </button>
+      <a href="{% url 'datenschutz' %}" class="text-indigo-600 hover:underline text-sm self-center">
+        Vollständige Datenschutzerklärung
+      </a>
+    </div>
+  </form>
+</div>
+{% endblock %}

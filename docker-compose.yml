@@ -1,0 +1,51 @@
+version: "3.9"
+
+services:
+  web:
+    build: .
+    container_name: stipconnect_web
+    restart: unless-stopped
+    env_file:
+      - .env
+    volumes:
+      - ./media:/app/media
+      - ./db.sqlite3:/app/db.sqlite3
+      - ./staticfiles:/app/staticfiles
+    expose:
+      - "8000"
+    networks:
+      - stipconnect
+
+  caddy:
+    image: caddy:2-alpine
+    container_name: stipconnect_caddy
+    restart: unless-stopped
+    ports:
+      - "8080:80"
+      # - "8443:443"  # Falls du lokales HTTPS willst; Cloudflare macht das aber schon
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+      - ./staticfiles:/srv/static:ro
+      - ./media:/srv/media:ro
+    networks:
+      - stipconnect
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: stipconnect_tunnel
+    restart: unless-stopped
+    command: tunnel --no-autoupdate run --token ${TUNNEL_TOKEN}
+    env_file:
+      - .env
+    networks:
+      - stipconnect
+
+volumes:
+  caddy_data:
+  caddy_config:
+
+networks:
+  stipconnect:
+    driver: bridge

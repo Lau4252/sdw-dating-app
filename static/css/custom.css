@@ -1,0 +1,11 @@
+html {
+    scroll-behavior: smooth;
+}
+
+.aspect-photo {
+    aspect-ratio: 1 / 1;
+}
+
+input[type="file"] {
+    padding: 0.5rem;
+}

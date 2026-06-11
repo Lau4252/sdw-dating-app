@@ -1,0 +1,70 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ profile }} – StipConnect{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto bg-white rounded-2xl shadow overflow-hidden">
+    <div class="flex flex-col md:flex-row">
+        <div class="md:w-1/2 bg-gray-100">
+            {% if profile.photo %}
+                <img src="{{ profile.photo.url }}" alt="Foto von {{ profile }}" class="w-full h-full object-cover aspect-square md:aspect-auto md:min-h-full">
+            {% else %}
+                <div class="w-full aspect-square md:aspect-auto md:min-h-full flex items-center justify-center text-gray-400">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-32 w-32" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                    </svg>
+                </div>
+            {% endif %}
+        </div>
+        <div class="md:w-1/2 p-8">
+            <h1 class="text-3xl font-bold text-gray-900 mb-2">{{ profile }}</h1>
+            <p class="text-indigo-600 font-medium mb-6">{{ profile.study_program|default:"—" }}</p>
+
+            <dl class="space-y-4">
+                <div>
+                    <dt class="text-xs font-semibold uppercase tracking-wide text-gray-500">Stadt</dt>
+                    <dd class="text-gray-800">{{ profile.city|default:"—" }}</dd>
+                </div>
+                <div>
+                    <dt class="text-xs font-semibold uppercase tracking-wide text-gray-500">Telefon</dt>
+                    <dd class="text-gray-800">
+                        {% if profile.phone %}
+                            <a href="tel:{{ profile.phone }}" class="text-indigo-600 hover:underline">{{ profile.phone }}</a>
+                        {% else %}
+                            —
+                        {% endif %}
+                    </dd>
+                </div>
+                {% if profile.birth_date %}
+                    <div>
+                        <dt class="text-xs font-semibold uppercase tracking-wide text-gray-500">Geburtstag</dt>
+                        <dd class="text-gray-800">{{ profile.birth_date|date:"j. F Y" }}</dd>
+                    </div>
+                {% endif %}
+                <div>
+                    <dt class="text-xs font-semibold uppercase tracking-wide text-gray-500">Interessen</dt>
+                    <dd class="text-gray-800">{{ profile.interests|default:"—"|linebreaksbr }}</dd>
+                </div>
+                <div>
+                    <dt class="text-xs font-semibold uppercase tracking-wide text-gray-500">Über mich</dt>
+                    <dd class="text-gray-800">{{ profile.bio|default:"—"|linebreaksbr }}</dd>
+                </div>
+            </dl>
+
+            <div class="mt-8 flex flex-wrap gap-3">
+                {% if request.user == profile.user %}
+                    <a href="{% url 'profile_edit' %}" class="inline-block bg-indigo-600 hover:bg-indigo-700 text-white font-medium px-5 py-2 rounded-lg transition">
+                        Bearbeiten
+                    </a>
+                    <a href="{% url 'profile_delete' %}" class="inline-block bg-red-100 hover:bg-red-200 text-red-700 font-medium px-5 py-2 rounded-lg transition">
+                        Profil löschen
+                    </a>
+                {% endif %}
+                <a href="{% url 'profile_list' %}" class="inline-block bg-gray-200 hover:bg-gray-300 text-gray-800 font-medium px-5 py-2 rounded-lg transition">
+                    Zurück
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

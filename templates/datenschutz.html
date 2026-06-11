@@ -1,0 +1,36 @@
+{% extends "base.html" %}
+{% block title %}Datenschutzerklärung – StipConnect{% endblock %}
+{% block content %}
+<div class="max-w-3xl mx-auto mt-12 p-6 bg-white rounded-xl shadow text-gray-800">
+  <h1 class="text-2xl font-bold mb-6">Datenschutzerklärung</h1>
+
+  <h2 class="text-lg font-semibold mt-4 mb-2">1. Verantwortliche Stelle</h2>
+  <p class="mb-4">[Name der Studienstiftung]<br>[Adresse]<br>E-Mail: [Kontakt-E-Mail]</p>
+
+  <h2 class="text-lg font-semibold mt-4 mb-2">2. Zweck der Datenverarbeitung</h2>
+  <p class="mb-4">StipConnect dient der Vernetzung der Stipendiaten untereinander. Dazu werden Profile mit Kontakt- und Studiendaten angelegt.</p>
+
+  <h2 class="text-lg font-semibold mt-4 mb-2">3. Erhobene Daten</h2>
+  <ul class="list-disc ml-5 mb-4 space-y-1">
+    <li>Pflicht: E-Mail-Adresse (von Cloudflare Access), automatisch erzeugter Username</li>
+    <li>Optional: Name, Foto, Telefonnummer, Studiengang, Stadt, Geburtsdatum, Interessen, Biografie</li>
+  </ul>
+
+  <h2 class="text-lg font-semibold mt-4 mb-2">4. Rechtsgrundlage</h2>
+  <p class="mb-4">Art. 6 Abs. 1 lit. a DSGVO (Einwilligung). Bei Fotos zusätzlich Art. 9 Abs. 2 lit. a DSGVO (ausdrückliche Einwilligung besonderer Kategorien).</p>
+
+  <h2 class="text-lg font-semibold mt-4 mb-2">5. Speicherdauer</h2>
+  <p class="mb-4">Daten werden gelöscht, sobald das Mitglied die Stiftung verlässt oder das Profil selbst löscht.</p>
+
+  <h2 class="text-lg font-semibold mt-4 mb-2">6. Weitergabe</h2>
+  <p class="mb-4">Keine Weitergabe an Dritte. Technischer Dienstleister: Cloudflare (Access, Tunnel, CDN). Cloudflare-DPA ist im Account akzeptiert.</p>
+
+  <h2 class="text-lg font-semibold mt-4 mb-2">7. Betroffenenrechte</h2>
+  <p class="mb-4">Auskunft, Berichtigung, Löschung, Einschränkung, Widerspruch, Datenübertragbarkeit. Kontakt: [E-Mail der Stiftung].</p>
+
+  <h2 class="text-lg font-semibold mt-4 mb-2">8. Löschung</h2>
+  <p class="mb-4">Jeder Nutzer kann sein Profil in den Einstellungen vollständig löschen. Alle personenbezogenen Daten und Fotos werden entfernt.</p>
+
+  <p class="text-sm text-gray-500 mt-8">Stand: Juni 2026</p>
+</div>
+{% endblock %}
