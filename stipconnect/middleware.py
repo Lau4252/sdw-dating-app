@@ -10,8 +10,11 @@ User = get_user_model()
 class CloudflareAccessMiddleware:
     """Authenticate users via Cloudflare Access headers.
     
-    In production: reads CF-Access-Authenticated-User-Email from Cloudflare.
-    In DEBUG mode: reads the header first, then falls back to DEV_AUTH_EMAIL from settings.
+    In production (behind Cloudflare Access): reads CF-Access-Authenticated-User-Email
+    and auto-creates/logs in the Django user. No 403 here — Cloudflare Access handles
+    the auth wall externally. Users without a valid Access session never reach this app.
+    
+    In DEBUG mode: reads the header first, then falls back to DEV_AUTH_EMAIL.
     """
     def __init__(self, get_response):
         self.get_response = get_response
@@ -34,11 +37,5 @@ class CloudflareAccessMiddleware:
                 user.save()
                 logger.info(f"Created new user from Cloudflare Access: {email}")
             login(request, user, backend='django.contrib.auth.backends.ModelBackend')
-        elif not request.user.is_authenticated and not request.path.startswith('/admin/'):
-            if not settings.DEBUG:
-                return HttpResponseForbidden(
-                    "Zugriff nur über Cloudflare Access möglich. "
-                    "Bitte melde dich über den Stipendiaten-Login an."
-                )
 
         return self.get_response(request)

@@ -73,7 +73,7 @@ class CloudflareAccessMiddlewareTestCase(TestCase):
     @patch('stipconnect.middleware.login')
     @patch('stipconnect.middleware.settings')
     def test_production_missing_header(self, mock_settings, mock_login):
-        """DEBUG=False + kein Header -> HttpResponseForbidden."""
+        """DEBUG=False + kein Header -> App bleibt offen (Cloudflare Access blockiert extern)."""
         mock_settings.DEBUG = False
         request = self.factory.get('/')
         request.user = MagicMock()
@@ -81,7 +81,7 @@ class CloudflareAccessMiddlewareTestCase(TestCase):
 
         response = self.middleware(request)
 
-        self.assertEqual(response.status_code, 403)
+        self.assertEqual(response, "ok")
         mock_login.assert_not_called()
 
     @patch('stipconnect.middleware.login')
