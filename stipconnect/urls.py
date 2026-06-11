@@ -17,6 +17,7 @@ urlpatterns = [
     path('consent/', TemplateView.as_view(template_name='consent.html'), name='consent'),
     path('consent/submit/', ConsentSubmitView.as_view(), name='consent_submit'),
     path('datenschutz/', TemplateView.as_view(template_name='datenschutz.html'), name='datenschutz'),
+    path('accounts/', include('django.contrib.auth.urls')),
     path('', home_redirect, name='home'),
 ]
 

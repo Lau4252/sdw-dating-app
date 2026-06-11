@@ -1,5 +1,6 @@
 import os
 import logging
+from django.conf import settings
 from django.contrib.auth import login, get_user_model
 from django.http import HttpResponseForbidden
 
@@ -10,7 +11,7 @@ class CloudflareAccessMiddleware:
     """Authenticate users via Cloudflare Access headers.
     
     In production: reads CF-Access-Authenticated-User-Email from Cloudflare.
-    In DEBUG mode: falls back to DEV_AUTH_EMAIL from settings.
+    In DEBUG mode: reads the header first, then falls back to DEV_AUTH_EMAIL from settings.
     """
     def __init__(self, get_response):
         self.get_response = get_response
@@ -19,11 +20,9 @@ class CloudflareAccessMiddleware:
         if request.user.is_authenticated:
             return self.get_response(request)
 
-        email = None
-        if os.environ.get('DJANGO_DEBUG', 'False').lower() == 'true':
+        email = request.META.get('HTTP_CF_ACCESS_AUTHENTICATED_USER_EMAIL')
+        if not email and settings.DEBUG:
             email = os.environ.get('DEV_AUTH_EMAIL')
-        else:
-            email = request.META.get('HTTP_CF_ACCESS_AUTHENTICATED_USER_EMAIL')
 
         if email:
             user, created = User.objects.get_or_create(
@@ -36,7 +35,7 @@ class CloudflareAccessMiddleware:
                 logger.info(f"Created new user from Cloudflare Access: {email}")
             login(request, user, backend='django.contrib.auth.backends.ModelBackend')
         elif not request.user.is_authenticated and not request.path.startswith('/admin/'):
-            if os.environ.get('DJANGO_DEBUG', 'False').lower() != 'true':
+            if not settings.DEBUG:
                 return HttpResponseForbidden(
                     "Zugriff nur über Cloudflare Access möglich. "
                     "Bitte melde dich über den Stipendiaten-Login an."
