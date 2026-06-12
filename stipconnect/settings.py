@@ -28,7 +28,7 @@ MIDDLEWARE = [
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'stipconnect.middleware.CloudflareAccessMiddleware',
+    'stipconnect.cloudflare_middleware.CloudflareAccessMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
@@ -74,6 +74,7 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATICFILES_DIRS = [BASE_DIR / 'static']
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media'
@@ -81,7 +82,16 @@ MEDIA_ROOT = BASE_DIR / 'media'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 LOGIN_REDIRECT_URL = '/profiles/'
+# Kein Django-Standard-Login mehr — Auth läuft ausschließlich über Cloudflare Access
+LOGIN_URL = '/'
 LOGOUT_REDIRECT_URL = '/'
+
+# Cloudflare Access logout URL (used by custom logout view)
+# Docs: https://developers.cloudflare.com/cloudflare-one/identity/users/session-management/#log-out-of-an-application
+CF_ACCESS_LOGOUT_URL = os.environ.get(
+    'CF_ACCESS_LOGOUT_URL',
+    'https://sdw-connect.kochlab.net/cdn-cgi/access/logout'
+)
 
 # Security headers
 SECURE_BROWSER_XSS_FILTER = True

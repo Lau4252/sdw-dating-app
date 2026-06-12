@@ -1,0 +1,137 @@
+{% extends 'base.html' %}
+{% block title %}Admin-Freigabe – StipConnect{% endblock %}
+
+{% block content %}
+<style>
+  .card-shadow { box-shadow: 0 10px 30px rgba(0,0,0,.25); }
+  .admin-yellow { background: #F9C513; color: #575756; }
+  .admin-green  { background: #4ade80; color: #064e3b; }
+  .admin-red    { background: #d35a5a; color: #fff; }
+  .radius-20 { border-radius: 20px; }
+  .radius-12 { border-radius: 12px; }
+  .btn-approve { background: #F9C513; color: #575756; }
+  .btn-approve:hover { background: #e0b010; }
+  .btn-reject  { background: #d35a5a; color: #fff; }
+  .btn-reject:hover { background: #b84848; }
+</style>
+
+<div class="max-w-6xl mx-auto">
+  <h1 class="text-2xl font-bold mb-6" style="color:#575756;">Admin-Freigabe: Profile prüfen</h1>
+
+  <!-- KPI-Karten -->
+  <div class="grid grid-cols-1 sm:grid-cols-4 gap-4 mb-8">
+    <div class="p-6 radius-20 card-shadow admin-yellow text-center">
+      <p class="text-3xl font-extrabold">{{ total_pending }}</p>
+      <p class="text-sm font-medium mt-1">Ausstehend</p>
+    </div>
+    <div class="p-6 radius-20 card-shadow admin-green text-center">
+      <p class="text-3xl font-extrabold">{{ total_approved }}</p>
+      <p class="text-sm font-medium mt-1">Freigegeben</p>
+    </div>
+    <div class="p-6 radius-20 card-shadow admin-red text-center">
+      <p class="text-3xl font-extrabold">{{ total_rejected }}</p>
+      <p class="text-sm font-medium mt-1">Abgelehnt</p>
+    </div>
+    <div class="p-6 radius-20 card-shadow text-center" style="background:#ede9fe;color:#6d28d9;">
+      <p class="text-3xl font-extrabold">{{ total_beta }}</p>
+      <p class="text-sm font-medium mt-1">Beta-Tester</p>
+    </div>
+  </div>
+
+  {% if messages %}
+    <div class="mb-6 space-y-2">
+      {% for message in messages %}
+        <div class="p-3 rounded-lg text-sm font-medium
+          {% if message.tags == 'success' %}bg-green-100 text-green-800{% else %}bg-yellow-100 text-yellow-800{% endif %}">
+          {{ message }}
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  {% if pending_profiles %}
+    <div class="space-y-6">
+      {% for profile in pending_profiles %}
+        <div class="bg-white p-5 radius-20 card-shadow flex flex-col md:flex-row gap-5 items-start">
+          <!-- Foto -->
+          <div class="shrink-0">
+            {% if profile.photos and profile.photos.0 %}
+              <img src="{{ profile.photos.0 }}" alt="Foto" class="w-24 h-24 rounded-xl object-cover">
+            {% else %}
+              <div class="w-24 h-24 rounded-xl bg-gray-100 flex items-center justify-center text-gray-400">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                </svg>
+              </div>
+            {% endif %}
+          </div>
+
+          <!-- Info -->
+          <div class="flex-grow min-w-0">
+            <h2 class="text-lg font-bold" style="color:#575756;">
+              {{ profile.user.get_full_name|default:profile.user.email }}
+              <span class="text-sm font-normal text-gray-500 ml-2">({{ profile.age|default:"?" }} J.)</span>
+            </h2>
+            <p class="text-sm text-gray-600 mt-1">
+              <span class="font-medium">Studium:</span> {{ profile.studienfach|default:"—" }} @ {{ profile.hochschule|default:"—" }}
+            </p>
+            <p class="text-sm text-gray-600 mt-0.5">
+              <span class="font-medium">Spricht:</span> {{ profile.sprachen|default:"—" }}
+            </p>
+            <p class="text-sm text-gray-600 mt-0.5">
+              <span class="font-medium">Suche:</span> {{ profile.get_seeking_display|default:"—" }} · {{ profile.get_looking_for_display|default:"—" }}
+            </p>
+            <p class="text-sm text-gray-600 mt-0.5">
+              <span class="font-medium">Spruch:</span> {{ profile.quote|default:"—" }}
+            </p>
+            <p class="text-sm text-gray-500 mt-2 italic">
+              {{ profile.about|truncatechars:200 }}
+            </p>
+            <p class="text-xs text-gray-400 mt-2">Registriert: {{ profile.created_at|date:"d.m.Y H:i" }}</p>
+          </div>
+
+          <!-- Actions -->
+          <div class="shrink-0 flex flex-row md:flex-col gap-3 w-full md:w-auto">
+            <form method="post" action="{% url 'admin_approve' pk=profile.pk %}" class="flex-1 md:flex-none">
+              {% csrf_token %}
+              <button type="submit" class="w-full md:w-auto px-5 py-2 radius-12 font-semibold btn-approve transition">
+                ✓ Freigeben
+              </button>
+            </form>
+            <form method="post" action="{% url 'admin_reject' pk=profile.pk %}" class="flex-1 md:flex-none">
+              {% csrf_token %}
+              <button type="submit" class="w-full md:w-auto px-5 py-2 radius-12 font-semibold btn-reject transition">
+                ✕ Ablehnen
+              </button>
+            </form>
+            <form method="post" action="{% url 'admin_toggle_beta' pk=profile.pk %}" class="flex-1 md:flex-none">
+              {% csrf_token %}
+              <button type="submit" class="w-full md:w-auto px-5 py-2 radius-12 font-semibold transition {% if profile.is_beta_tester %}bg-purple-100 text-purple-800{% else %}bg-gray-100 text-gray-600{% endif %}">
+                {% if profile.is_beta_tester %}🔒 Beta aus{% else %}🔓 Beta ein{% endif %}
+              </button>
+            </form>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+
+    {% if is_paginated %}
+      <div class="mt-8 flex justify-center items-center space-x-2">
+        {% if page_obj.has_previous %}
+          <a href="?page={{ page_obj.previous_page_number }}" class="px-4 py-2 bg-white border rounded-lg hover:bg-gray-50">«</a>
+        {% endif %}
+        <span class="text-sm text-gray-600">Seite {{ page_obj.number }} von {{ page_obj.paginator.num_pages }}</span>
+        {% if page_obj.has_next %}
+          <a href="?page={{ page_obj.next_page_number }}" class="px-4 py-2 bg-white border rounded-lg hover:bg-gray-50">»</a>
+        {% endif %}
+      </div>
+    {% endif %}
+
+  {% else %}
+    <div class="bg-white p-10 radius-20 card-shadow text-center">
+      <p class="text-gray-500 text-lg">Keine ausstehenden Profile zur Prüfung.</p>
+      <p class="text-gray-400 text-sm mt-2">Alle Profile wurden bereits bearbeitet.</p>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

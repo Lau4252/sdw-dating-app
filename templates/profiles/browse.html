@@ -1,0 +1,102 @@
+{% extends 'base.html' %}
+
+{% block title %}Entdecken – StipConnect{% endblock %}
+
+{% block content %}
+<style>
+  :root{--yellow:#F9C513;--yellow-d:#e0ad00;--grey:#575756;--grey-l:#8a8a89;--bg:#ecebe7;--card:#fff;--line:#e6e4de;--radius:20px;}
+  .browse-wrap{max-width:900px;margin:0 auto;}
+  .filterbar{background:var(--card);border-radius:14px;padding:14px 16px;box-shadow:0 3px 12px rgba(0,0,0,.05);margin-bottom:18px;display:flex;flex-wrap:wrap;gap:10px;align-items:center;}
+  .filterbar select,.filterbar input{border:1px solid var(--line);border-radius:10px;padding:8px 12px;font-size:14px;color:var(--grey);background:#fff;flex:1 1 160px;min-width:140px;}
+  .filterbar select:focus,.filterbar input:focus{outline:none;border-color:var(--yellow);}
+  .filterbar button{background:var(--yellow);color:var(--grey);border:none;border-radius:10px;padding:8px 18px;font-size:14px;font-weight:700;cursor:pointer;}
+  .filterbar a.reset{color:var(--grey-l);font-size:13px;text-decoration:underline;margin-left:auto;}
+  .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px;}
+  .pcard{background:var(--card);border-radius:var(--radius);overflow:hidden;box-shadow:0 4px 14px rgba(0,0,0,.08);transition:transform .15s,box-shadow .15s;cursor:pointer;text-decoration:none;display:block;}
+  .pcard:hover{transform:translateY(-4px);box-shadow:0 8px 24px rgba(0,0,0,.14);}
+  .pimg{height:240px;background-size:cover;background-position:center;position:relative;}
+  .pimg .tag{position:absolute;bottom:10px;left:10px;background:rgba(0,0,0,.55);color:#fff;font-size:11px;font-weight:700;padding:4px 10px;border-radius:8px;}
+  .pinfo{padding:12px 14px 14px;}
+  .pinfo .name{font-size:16px;font-weight:800;color:var(--grey);line-height:1.2;}
+  .pinfo .meta{font-size:13px;color:var(--grey-l);margin-top:4px;line-height:1.3;}
+  .pinfo .quote{font-size:12px;color:var(--grey-l);margin-top:6px;font-style:italic;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .empty{text-align:center;padding:60px 20px;color:var(--grey-l);}
+  .empty b{color:var(--grey);font-size:18px;display:block;margin-bottom:6px;}
+  .results-info{font-size:13px;color:var(--grey-l);margin-bottom:10px;}
+</style>
+
+<div class="browse-wrap">
+  <form method="get" class="filterbar">
+    <select name="hochschule" onchange="this.form.submit()">
+      <option value="">Alle Hochschulen</option>
+      {% for h in hochschulen %}
+        <option value="{{ h }}" {% if request.GET.hochschule == h %}selected{% endif %}>{{ h }}</option>
+      {% endfor %}
+    </select>
+    <select name="studienfach" onchange="this.form.submit()">
+      <option value="">Alle Studiengänge</option>
+      {% for s in studienfaecher %}
+        <option value="{{ s }}" {% if request.GET.studienfach == s %}selected{% endif %}>{{ s }}</option>
+      {% endfor %}
+    </select>
+    <select name="region" onchange="this.form.submit()">
+      <option value="">Alle Regionen</option>
+      {% for r in regionen %}
+        <option value="{{ r }}" {% if request.GET.region == r %}selected{% endif %}>{{ r }}</option>
+      {% endfor %}
+    </select>
+    <input type="text" name="q" value="{{ request.GET.q|default:'' }}" placeholder="Suchen…">
+    <button type="submit">Filtern</button>
+    {% if filter_count > 0 %}
+      <a href="{% url 'browse' %}" class="reset">Zurücksetzen</a>
+    {% endif %}
+  </form>
+
+  <div class="results-info">
+    {{ page_obj.paginator.count }} Profile gefunden
+    {% if filter_count > 0 %}· {{ filter_count }} Filter aktiv{% endif %}
+  </div>
+
+  {% if profiles %}
+    <div class="grid">
+      {% for profile in profiles %}
+        <a href="{% url 'profile_detail' pk=profile.pk %}" class="pcard">
+          <div class="pimg" style="background-image:url('{{ profile.photos.0|default:'' }}');background-color:{% if not profile.photos.0 %}#ddd{% else %}transparent{% endif %}">
+            {% if not profile.photos.0 %}<span style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--grey-l);font-size:14px;">📷 Kein Foto</span>{% endif %}
+            {% if profile.age %}<span class="tag">{{ profile.age }} Jahre</span>{% endif %}
+          </div>
+          <div class="pinfo">
+            <div class="name">{{ profile.user.get_full_name|default:profile.user.email }}</div>
+            <div class="meta">
+              {% if profile.hochschule %}{{ profile.hochschule }}{% endif %}
+              {% if profile.studienfach %}· {{ profile.studienfach }}{% endif %}
+            </div>
+            {% if profile.quote %}
+              <div class="quote">&ldquo;{{ profile.quote }}&rdquo;</div>
+            {% endif %}
+          </div>
+        </a>
+      {% endfor %}
+    </div>
+
+    {% if is_paginated %}
+      <div style="margin-top:22px;display:flex;justify-content:center;align-items:center;gap:8px;">
+        {% if page_obj.has_previous %}
+          <a href="?hochschule={{ request.GET.hochschule|default:''|urlencode }}&studienfach={{ request.GET.studienfach|default:''|urlencode }}&region={{ request.GET.region|default:''|urlencode }}&q={{ request.GET.q|default:''|urlencode }}&page={{ page_obj.previous_page_number }}"
+             style="padding:8px 14px;background:#fff;border:1px solid var(--line);border-radius:10px;color:var(--grey);text-decoration:none;font-size:14px;">&laquo; Zurück</a>
+        {% endif %}
+        <span style="font-size:13px;color:var(--grey-l);">Seite {{ page_obj.number }} von {{ page_obj.paginator.num_pages }}</span>
+        {% if page_obj.has_next %}
+          <a href="?hochschule={{ request.GET.hochschule|default:''|urlencode }}&studienfach={{ request.GET.studienfach|default:''|urlencode }}&region={{ request.GET.region|default:''|urlencode }}&q={{ request.GET.q|default:''|urlencode }}&page={{ page_obj.next_page_number }}"
+             style="padding:8px 14px;background:#fff;border:1px solid var(--line);border-radius:10px;color:var(--grey);text-decoration:none;font-size:14px;">Weiter &raquo;</a>
+        {% endif %}
+      </div>
+    {% endif %}
+  {% else %}
+    <div class="empty">
+      <b>Keine Profile gefunden</b>
+      <p>Probiere andere Filter oder komm später wieder.</p>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

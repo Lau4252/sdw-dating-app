@@ -134,8 +134,8 @@ class ProfileDetailView(LoginRequiredMixin, ConsentRequiredMixin, RequireApprove
         profile = self.object
         user = self.request.user
         is_match = Swipe.is_match(user, profile.user)
-        under_200 = User.objects.count() < 200
-        ctx['can_see_phone'] = is_match or (user == profile.user) or under_200
+        # Telefonnummer nur bei Match oder eigenem Profil sichtbar (DSGVO)
+        ctx['can_see_phone'] = is_match or (user == profile.user)
         ctx['is_match'] = is_match
         ctx['is_own_profile'] = (user == profile.user)
         ctx['has_sent_like'] = Swipe.objects.filter(
@@ -173,9 +173,10 @@ class ConsentSubmitView(LoginRequiredMixin, View):
             profile = request.user.profile
             profile.consent_given = True
             profile.consent_date = timezone.now()
+            profile.visible = True  # Nach Consent sofort sichtbar
             profile.save()
             messages.success(request, "Einwilligung erfolgreich erteilt. Willkommen bei StipConnect!")
-            return redirect('profile_list')
+            return redirect('browse')  # Direkt zu Browse statt Profile-Liste
         messages.error(request, "Bitte setze den Haken, um fortzufahren.")
         return redirect('consent')
 
@@ -222,14 +223,14 @@ class MyMatchesView(LoginRequiredMixin, ConsentRequiredMixin, RequireApprovedMix
 
 class BrowseProfilesView(BrowseView):
     """Einfache Browse-View fuer StipConnect (Task 3.1).
-    Zeigt sichtbare Profile im Tailwind-Grid ohne Filter-Overhead.
+    Zeigt sichtbare Profile im Tailwind-Grid mit Filter-Bar.
     """
     template_name = 'browse.html'
     paginate_by = 12
 
     def get_context_data(self, **kwargs):
-        # Nur Standard-Pagination-Context, kein Filter-Bar-Zeugs
-        ctx = super(ListView, self).get_context_data(**kwargs)
+        # Filter-Optionen vom Parent (BrowseView) holen
+        ctx = super().get_context_data(**kwargs)
         ctx['profiles'] = ctx.get('object_list', [])
         return ctx
 

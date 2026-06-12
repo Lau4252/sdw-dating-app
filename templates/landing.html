@@ -1,0 +1,632 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#F9C513">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="StipConnect">
+<link rel="manifest" href="/static/manifest.json">
+<link rel="apple-touch-icon" href="/static/images/icon-192.png">
+<link rel="mask-icon" href="/static/images/icon-192.png" color="#F9C513">
+<title>Such Dir Wen — Prototyp</title>
+<style>
+  :root{
+    --yellow:#F9C513;--yellow-d:#e0ad00;--grey:#575756;--grey-l:#8a8a89;
+    --bg:#ecebe7;--card:#ffffff;--line:#e6e4de;--reject:#d35a5a;--radius:20px;
+  }
+  *{box-sizing:border-box;margin:0;padding:0;font-family:-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;}
+  body{background:#cfcdc7;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:24px;}
+  .phone{width:382px;max-width:100%;height:780px;background:var(--bg);border-radius:30px;overflow:hidden;
+    box-shadow:0 22px 60px rgba(0,0,0,.4);display:flex;flex-direction:column;position:relative;}
+
+  /* Heart-Logo (wiederverwendbar) */
+  .heart{display:inline-block;}
+
+  /* ---- LOGIN ---- */
+  .stage{position:absolute;inset:0;display:none;flex-direction:column;z-index:30;background:var(--bg);}
+  .stage.active{display:flex;}
+  .login{background:var(--yellow);height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;padding:30px;text-align:center;}
+  .login .big-logo{display:flex;flex-direction:column;align-items:center;gap:14px;}
+  .login h1{color:var(--grey);font-size:34px;font-weight:800;letter-spacing:-1px;}
+  .login h1 u{color:var(--grey);text-decoration:none;-webkit-text-stroke:2.2px #fff;paint-order:stroke;}
+  .login .slogan{color:var(--grey);font-style:italic;font-size:16px;margin-top:-8px;}
+  .login .sub{color:#7a6a12;font-size:14px;max-width:260px;line-height:1.4;margin-top:6px;}
+  .login button{margin-top:14px;background:var(--grey);color:#fff;border:none;border-radius:30px;
+    padding:15px 30px;font-size:16px;font-weight:700;cursor:pointer;box-shadow:0 8px 20px rgba(0,0,0,.2);}
+  .login button:active{transform:scale(.97);}
+  .login .foot{position:absolute;bottom:22px;color:#7a6a12;font-size:12px;}
+
+  /* ---- CONSENT ---- */
+  .consent{height:100%;display:flex;flex-direction:column;background:var(--bg);}
+  .consent .ctop{background:var(--yellow);padding:20px 18px;display:flex;align-items:center;gap:10px;}
+  .consent .ctop h2{color:var(--grey);font-size:20px;font-weight:800;}
+  .consent .cbody{flex:1;overflow-y:auto;padding:18px;}
+  .consent h3{color:var(--grey);font-size:16px;margin:14px 0 6px;}
+  .consent p{color:#6a6a69;font-size:14px;line-height:1.5;margin-bottom:8px;}
+  .consent ul{margin:4px 0 8px 18px;color:#6a6a69;font-size:14px;line-height:1.55;}
+  .consent .link{color:var(--yellow-d);font-weight:700;text-decoration:underline;cursor:pointer;font-size:14px;}
+  .consent .checkrow{display:flex;gap:11px;align-items:flex-start;background:#fff;border-radius:13px;padding:14px;margin-top:14px;box-shadow:0 3px 12px rgba(0,0,0,.05);}
+  .consent .checkrow input{width:22px;height:22px;flex:0 0 22px;margin-top:1px;accent-color:var(--yellow-d);}
+  .consent .checkrow label{font-size:14px;color:var(--grey);line-height:1.4;}
+  .consent .cfoot{padding:14px 18px;border-top:1px solid var(--line);background:#fff;}
+  .consent .cfoot button{width:100%;background:var(--yellow);color:var(--grey);border:none;border-radius:14px;
+    padding:15px;font-size:16px;font-weight:800;cursor:pointer;opacity:.45;pointer-events:none;}
+  .consent .cfoot button.on{opacity:1;pointer-events:auto;}
+
+  /* ---- AUTH (Anmelden/Registrieren/Pending) ---- */
+  .login button.secondary{background:transparent;color:var(--grey);box-shadow:none;border:2px solid var(--grey);margin-top:0;}
+  .authpage{height:100%;display:flex;flex-direction:column;background:var(--bg);}
+  .authtop{background:var(--yellow);padding:18px;display:flex;align-items:center;gap:10px;}
+  .authtop .back{cursor:pointer;color:var(--grey);font-size:24px;line-height:1;width:24px;}
+  .authtop h2{color:var(--grey);font-size:20px;font-weight:800;}
+  .authbody{flex:1;overflow-y:auto;padding:22px 20px;display:flex;flex-direction:column;}
+  .authbody label{font-size:13px;font-weight:700;color:var(--grey-l);margin:14px 0 6px;}
+  .authbody input,.authbody select{border:1.5px solid var(--line);border-radius:12px;padding:13px;font-size:15px;color:var(--grey);outline:none;background:#fff;}
+  .authbody input:focus,.authbody select:focus{border-color:var(--yellow-d);}
+  .authbody .main-btn{margin-top:24px;background:var(--yellow);color:var(--grey);border:none;border-radius:14px;padding:15px;font-size:16px;font-weight:800;cursor:pointer;}
+  .authbody .main-btn:active{transform:scale(.98);}
+  .authalt{text-align:center;font-size:14px;color:var(--grey-l);margin-top:18px;}
+  .authalt span{color:var(--yellow-d);font-weight:700;cursor:pointer;}
+  .pending{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:34px;text-align:center;background:var(--bg);}
+  .pending .pcircle{width:96px;height:96px;border-radius:50%;background:var(--yellow);display:flex;align-items:center;justify-content:center;}
+  .pending .pcircle svg{width:48px;height:48px;stroke:var(--grey);fill:none;stroke-width:2;}
+  .pending h2{color:var(--grey);font-size:24px;font-weight:800;}
+  .pending p{color:#6a6a69;font-size:15px;line-height:1.5;max-width:280px;}
+  .pending button{margin-top:8px;background:var(--grey);color:#fff;border:none;border-radius:28px;padding:14px 28px;font-weight:700;font-size:15px;cursor:pointer;}
+
+  /* ---- HEADER (App) ---- */
+  .header{background:var(--yellow);padding:12px 16px;display:flex;align-items:center;gap:10px;flex:0 0 auto;}
+  .logoicon{width:40px;height:40px;flex:0 0 40px;display:flex;align-items:center;justify-content:center;}
+  .logotxt{display:flex;flex-direction:column;line-height:1;}
+  .logotxt b{font-size:20px;font-weight:800;color:var(--grey);letter-spacing:-.5px;}
+  .logotxt b u{color:var(--grey);text-decoration:none;-webkit-text-stroke:2px #fff;paint-order:stroke;}
+  .logotxt span{font-size:11px;color:var(--grey);font-style:italic;margin-top:2px;}
+
+  .body{flex:1;overflow-y:auto;padding:16px;}
+  .screen{display:none;}.screen.active{display:block;}
+  .scrtitle{color:var(--grey);font-size:24px;font-weight:800;margin:2px 2px 14px;}
+
+  /* ---- ENTDECKEN ---- */
+  .card{position:relative;border-radius:var(--radius);overflow:hidden;aspect-ratio:3/4;
+    background:#222;box-shadow:0 10px 30px rgba(0,0,0,.25);user-select:none;}
+  .photo{position:absolute;inset:0;background-size:cover;background-position:center;opacity:0;transition:opacity .2s;}
+  .photo.active{opacity:1;}
+  .shade{position:absolute;inset:0;z-index:2;pointer-events:none;
+    background:linear-gradient(to top,rgba(0,0,0,.85),rgba(0,0,0,.25) 36%,transparent 56%);}
+  .bars{position:absolute;top:12px;left:14px;right:14px;z-index:5;display:flex;gap:6px;}
+  .bars i{flex:1;height:3.5px;border-radius:3px;background:rgba(255,255,255,.35);}
+  .bars i.on{background:#fff;}
+  .tap{position:absolute;top:0;bottom:120px;width:42%;z-index:3;cursor:pointer;}
+  .tap.left{left:0;}.tap.right{right:0;}
+  .front{position:absolute;left:20px;right:20px;bottom:20px;z-index:4;color:#fff;}
+  .name{font-size:36px;font-weight:800;line-height:1;}
+  .name .age{font-weight:300;font-size:30px;}
+  .miniquote{display:flex;gap:8px;margin-top:10px;font-size:16px;color:#fff;}
+  .miniquote .qm{color:var(--yellow);font-weight:800;font-size:22px;line-height:.8;}
+  .up{position:absolute;right:16px;bottom:108px;z-index:5;width:42px;height:42px;border-radius:50%;
+    border:2px solid #fff;background:rgba(0,0,0,.3);display:flex;align-items:center;justify-content:center;cursor:pointer;}
+  .up svg{width:19px;height:19px;stroke:#fff;}
+  .empty{aspect-ratio:3/4;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;
+    background:#fff;border-radius:var(--radius);color:var(--grey-l);text-align:center;padding:30px;box-shadow:0 10px 30px rgba(0,0,0,.1);}
+  .empty b{color:var(--grey);font-size:19px;}
+
+  .sheet{position:absolute;inset:0;z-index:8;background:#fff;border-radius:var(--radius);
+    transform:translateY(100%);transition:transform .32s cubic-bezier(.4,0,.2,1);overflow-y:auto;padding:0 0 24px;}
+  .sheet.open{transform:translateY(0);}
+  .hero{height:210px;background-size:cover;background-position:center;position:relative;}
+  .hero .down{position:absolute;right:14px;bottom:14px;width:40px;height:40px;border-radius:50%;
+    border:2px solid #fff;background:rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center;cursor:pointer;}
+  .hero .down svg{width:19px;height:19px;stroke:#fff;}
+  .hero .htitle{position:absolute;left:16px;bottom:12px;color:#fff;}
+  .hero .htitle b{font-size:28px;font-weight:800;}.hero .htitle span{font-weight:300;font-size:24px;}
+  .block{margin:13px;background:#f5f4f0;border-radius:15px;padding:15px;}
+  .bhead{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:800;color:var(--grey-l);margin-bottom:11px;text-transform:uppercase;letter-spacing:.4px;}
+  .bhead svg{width:16px;height:16px;stroke:var(--yellow-d);fill:none;}
+  .big{font-size:19px;color:var(--grey);font-weight:600;}
+  .row{display:flex;align-items:center;gap:11px;padding:11px 0;font-size:16px;color:var(--grey);border-top:1px solid var(--line);}
+  .row:first-of-type{border-top:none;}
+  .row svg{width:18px;height:18px;stroke:var(--grey-l);fill:none;flex:0 0 18px;}
+  .sub{font-size:12px;color:var(--grey-l);margin:6px 0 2px;}
+  .about{font-size:17px;color:var(--grey);line-height:1.35;}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;}
+  .chip{font-size:14px;padding:7px 14px;border-radius:16px;background:#e7e5df;color:var(--grey);}
+  .chip.main{background:var(--yellow);color:var(--grey);font-weight:700;}
+
+  .actions{display:flex;justify-content:center;align-items:center;gap:22px;margin-top:20px;}
+  .btn{border:none;cursor:pointer;border-radius:50%;display:flex;align-items:center;justify-content:center;
+    background:#fff;box-shadow:0 5px 16px rgba(0,0,0,.15);transition:transform .1s;}
+  .btn:active{transform:scale(.88);}
+  .btn-rewind{width:54px;height:54px;}
+  .btn-reject{width:66px;height:66px;border:2px solid var(--line);}
+  .btn-like{width:78px;height:78px;background:var(--yellow);box-shadow:0 6px 18px rgba(249,197,19,.55);}
+  .btn-rewind svg{width:23px;height:23px;stroke:var(--grey-l);}
+  .btn-reject svg{width:28px;height:28px;stroke:var(--grey);}
+  .btn-like svg{width:38px;height:38px;fill:#fff;}
+  .btn:disabled{opacity:.4;pointer-events:none;}
+
+  /* ---- MATCHES ---- */
+  .mgrid{display:grid;grid-template-columns:1fr 1fr;gap:13px;}
+  .mcard{border-radius:15px;overflow:hidden;background:var(--card);box-shadow:0 4px 14px rgba(0,0,0,.08);}
+  .mcard .mimg{height:140px;background-size:cover;background-position:center;position:relative;cursor:pointer;}
+  .mcard .mimg .mname{position:absolute;left:10px;bottom:8px;color:#fff;font-weight:700;font-size:16px;text-shadow:0 1px 4px rgba(0,0,0,.8);z-index:2;}
+  .mcard .mimg::after{content:"";position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.7),transparent 55%);}
+  .newbadge{position:absolute;top:8px;left:8px;z-index:3;background:var(--yellow);color:var(--grey);font-size:11px;font-weight:800;padding:3px 9px;border-radius:9px;}
+  .mphone{display:flex;align-items:center;gap:7px;padding:9px 11px;color:var(--grey);font-size:13px;font-weight:600;}
+  .mphone svg{width:15px;height:15px;stroke:var(--yellow-d);fill:none;}
+  .mcall{display:block;text-align:center;background:var(--yellow);color:var(--grey);font-weight:700;font-size:13px;padding:9px;cursor:pointer;}
+  .mempty{text-align:center;color:var(--grey-l);padding:50px 20px;font-size:15px;}
+
+  /* ---- PROFIL ---- */
+  .phead{position:relative;border-radius:16px;overflow:hidden;height:210px;background-size:cover;background-position:center;}
+  .phead::after{content:"";position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.8),transparent 55%);}
+  .phead .pn{position:absolute;left:14px;bottom:12px;z-index:2;color:#fff;display:flex;align-items:center;gap:8px;}
+  .phead .pn b{font-size:24px;font-weight:800;}
+  .verified{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:var(--yellow);}
+  .verified svg{width:13px;height:13px;stroke:var(--grey);fill:none;stroke-width:3.2;}
+  .pblock{margin-top:13px;background:var(--card);border-radius:15px;padding:15px;box-shadow:0 3px 12px rgba(0,0,0,.05);}
+  .pblock h4{color:var(--grey-l);font-size:12px;font-weight:800;margin-bottom:11px;text-transform:uppercase;letter-spacing:.5px;}
+  .pedit{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:16px;color:var(--grey);padding:11px 0;border-top:1px solid var(--line);cursor:pointer;}
+  .pedit:first-of-type{border-top:none;}
+  .pedit .v{color:var(--grey-l);font-size:14px;text-align:right;}
+  .thumbs{display:flex;gap:10px;flex-wrap:wrap;}
+  .thumb{width:62px;height:82px;border-radius:9px;background-size:cover;background-position:center;}
+  .thumb.add{display:flex;align-items:center;justify-content:center;background:#f0eee8;border:1.5px dashed var(--yellow-d);color:var(--yellow-d);font-size:28px;cursor:pointer;}
+  .promptbox{background:#f5f4f0;border-radius:11px;padding:10px 12px;margin-top:9px;cursor:pointer;}
+  .promptbox .q{font-size:12px;color:var(--yellow-d);font-weight:700;margin-bottom:3px;}
+  .promptbox .a{font-size:15px;color:var(--grey);}
+  .addrow{color:var(--yellow-d);font-weight:700;font-size:15px;margin-top:9px;cursor:pointer;}
+  .danger{display:block;width:100%;text-align:center;margin-top:16px;padding:13px;border-radius:13px;background:#f7e3e3;color:var(--reject);font-weight:700;font-size:15px;border:none;cursor:pointer;}
+
+  /* ---- NAV ---- */
+  .nav{display:flex;justify-content:space-around;align-items:center;background:#fff;border-top:1px solid var(--line);padding:11px 8px 9px;flex:0 0 auto;}
+  .nav .tab{display:flex;flex-direction:column;align-items:center;gap:3px;cursor:pointer;color:var(--grey-l);font-size:11px;font-weight:700;position:relative;}
+  .nav .tab svg{width:25px;height:25px;stroke:currentColor;fill:none;stroke-width:2;}
+  .nav .tab.active{color:var(--yellow-d);}
+  .navbadge{position:absolute;top:-4px;right:6px;background:var(--reject);color:#fff;font-size:10px;font-weight:800;min-width:16px;height:16px;border-radius:8px;display:flex;align-items:center;justify-content:center;padding:0 4px;}
+
+  /* ---- PROFIL-ANSICHT (für Matches) ---- */
+  .pview{position:absolute;inset:0;z-index:50;background:#fff;transform:translateY(100%);transition:transform .3s cubic-bezier(.4,0,.2,1);overflow-y:auto;}
+  .pview.open{transform:translateY(0);}
+  .pvcontact{margin:13px;background:var(--yellow);border-radius:15px;padding:15px;}
+  .pvcontact .pvnum{font-size:20px;font-weight:800;color:var(--grey);}
+  .pvcontact .pvcall{display:block;text-align:center;margin-top:10px;background:var(--grey);color:#fff;font-weight:700;padding:11px;border-radius:11px;cursor:pointer;}
+
+  /* ---- MODAL ---- */
+  .modal-bg{position:absolute;inset:0;z-index:60;background:rgba(0,0,0,.5);display:none;align-items:center;justify-content:center;padding:24px;}
+  .modal-bg.open{display:flex;}
+  .modal{background:#fff;border-radius:18px;width:100%;padding:20px;}
+  .modal h3{color:var(--grey);font-size:18px;margin-bottom:14px;}
+  .modal input,.modal textarea,.modal select{width:100%;border:1.5px solid var(--line);border-radius:11px;padding:12px;font-size:15px;color:var(--grey);outline:none;}
+  .modal textarea{min-height:90px;resize:vertical;}
+  .modal input:focus,.modal textarea:focus{border-color:var(--yellow-d);}
+  .modal .mbtns{display:flex;gap:10px;margin-top:16px;}
+  .modal .mbtns button{flex:1;border:none;border-radius:11px;padding:12px;font-weight:700;font-size:15px;cursor:pointer;}
+  .modal .cancel{background:#eee;color:var(--grey);}
+  .modal .save{background:var(--yellow);color:var(--grey);}
+  .modal .hintline{font-size:12px;color:var(--grey-l);margin-top:6px;}
+  .editchips{display:flex;flex-wrap:wrap;gap:8px;min-height:20px;}
+  .editchip{display:inline-flex;align-items:center;gap:7px;background:var(--yellow);color:var(--grey);font-weight:700;font-size:14px;padding:7px 9px 7px 13px;border-radius:16px;}
+  .editchip span{cursor:pointer;font-weight:800;opacity:.7;font-size:16px;line-height:1;}
+  .editchip span:hover{opacity:1;}
+  .chipadd{display:flex;gap:8px;margin-top:12px;}
+  .chipadd input{flex:1;}
+  .chipadd button{flex:0 0 48px;border:none;border-radius:11px;background:var(--grey);color:#fff;font-size:22px;font-weight:700;cursor:pointer;}
+
+  /* ---- MATCH POPUP ---- */
+  .matchpop{position:absolute;inset:0;z-index:70;background:rgba(0,0,0,.78);display:none;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:30px;text-align:center;}
+  .matchpop.open{display:flex;}
+  .matchpop h2{color:var(--yellow);font-size:34px;font-weight:800;}
+  .matchpop .mp-photos{display:flex;gap:-10px;}
+  .matchpop .mp-photos div{width:96px;height:96px;border-radius:50%;border:3px solid var(--yellow);background-size:cover;background-position:center;}
+  .matchpop .mp-photos div:nth-child(2){margin-left:-22px;}
+  .matchpop p{color:#fff;font-size:16px;line-height:1.4;}
+  .matchpop .num{color:var(--yellow);font-weight:800;font-size:20px;}
+  .matchpop button{background:var(--yellow);color:var(--grey);border:none;border-radius:30px;padding:14px 30px;font-weight:800;font-size:16px;cursor:pointer;margin-top:6px;}
+  .hint{text-align:center;color:var(--grey-l);font-size:11px;padding:8px 0 12px;flex:0 0 auto;background:#fff;}
+</style>
+</head>
+<body>
+<div class="phone">
+
+  <!-- ============ LOGIN ============ -->
+  <div class="stage active" id="stage-login">
+    <div class="login">
+      <div class="big-logo">
+        <svg viewBox="-12 -12 164 164" width="120" height="120">
+          <clipPath id="hcl"><path d="M70 120 C 18 84, 18 40, 46 28 C 60 22, 70 32, 70 44 C 70 32, 80 22, 94 28 C 122 40, 122 84, 70 120 Z"/></clipPath>
+          <path d="M70 120 C 18 84, 18 40, 46 28 C 60 22, 70 32, 70 44 C 70 32, 80 22, 94 28 C 122 40, 122 84, 70 120 Z" fill="none" stroke="#fff" stroke-width="16"/>
+          <g clip-path="url(#hcl)"><rect width="140" height="140" fill="#575756"/><polygon points="140,0 140,140 0,140" fill="#F9C513"/><line x1="140" y1="0" x2="0" y2="140" stroke="#fff" stroke-width="7"/></g>
+        </svg>
+        <h1><u>S</u>uch <u>D</u>ir <u>W</u>en</h1>
+      </div>
+      <div class="slogan">Wir stiften Connections!</div>
+      <div class="sub">Nur für Stipendiatinnen und Stipendiaten der Stiftung der Deutschen Wirtschaft.</div>
+      <button onclick="toStage('signin')">Anmelden</button>
+      <button class="secondary" onclick="toStage('consent')">Registrieren</button>
+    </div>
+  </div>
+
+  <!-- ============ ANMELDEN ============ -->
+  <div class="stage" id="stage-signin">
+    <div class="authpage">
+      <div class="authtop"><span class="back" onclick="toStage('login')">&#8249;</span><h2>Anmelden</h2></div>
+      <div class="authbody">
+        <label>E-Mail</label>
+        <input type="email" placeholder="name@beispiel.de" value="kj.89@web.de">
+        <label>Passwort</label>
+        <input type="password" placeholder="••••••••" value="demo1234">
+        <button class="main-btn" onclick="enterApp()">Einloggen</button>
+        <p class="authalt">Noch kein Konto? <span onclick="toStage('consent')">Registrieren</span></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ REGISTRIEREN ============ -->
+  <div class="stage" id="stage-register">
+    <div class="authpage">
+      <div class="authtop"><span class="back" onclick="toStage('login')">&#8249;</span><h2>Registrieren</h2></div>
+      <div class="authbody">
+        <label>Vorname</label>
+        <input type="text" placeholder="Dein Vorname">
+        <label>E-Mail (SDW-Adresse)</label>
+        <input type="email" placeholder="name@beispiel.de">
+        <label>Hochschule</label>
+        <input type="text" placeholder="z.B. FH Erfurt">
+        <label>Passwort</label>
+        <input type="password" placeholder="Mind. 8 Zeichen">
+        <button class="main-btn" onclick="toStage('pending')">Konto anlegen</button>
+        <p class="authalt">Schon ein Konto? <span onclick="toStage('signin')">Anmelden</span></p>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ FREISCHALTUNG AUSSTEHEND ============ -->
+  <div class="stage" id="stage-pending">
+    <div class="pending">
+      <div class="pcircle"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div>
+      <h2>Fast geschafft!</h2>
+      <p>Dein Konto wird von einem Admin der Stiftung geprüft und freigeschaltet. Sobald das erledigt ist, kannst du dich anmelden — du bekommst eine Nachricht per E-Mail.</p>
+      <button onclick="toStage('signin')">Zur Anmeldung</button>
+    </div>
+  </div>
+
+  <!-- ============ CONSENT ============ -->
+  <div class="stage" id="stage-consent">
+    <div class="consent">
+      <div class="ctop">
+        <svg viewBox="-12 -12 164 164" width="34" height="34"><clipPath id="hcc"><path d="M70 120 C 18 84, 18 40, 46 28 C 60 22, 70 32, 70 44 C 70 32, 80 22, 94 28 C 122 40, 122 84, 70 120 Z"/></clipPath><path d="M70 120 C 18 84, 18 40, 46 28 C 60 22, 70 32, 70 44 C 70 32, 80 22, 94 28 C 122 40, 122 84, 70 120 Z" fill="none" stroke="#fff" stroke-width="16"/><g clip-path="url(#hcc)"><rect width="140" height="140" fill="#575756"/><polygon points="140,0 140,140 0,140" fill="#fff"/><line x1="140" y1="0" x2="0" y2="140" stroke="#F9C513" stroke-width="7"/></g></svg>
+        <h2>Datenschutz &amp; Einwilligung</h2>
+      </div>
+      <div class="cbody">
+        <p>Schön, dass du dabei bist! Bevor es losgeht, kurz transparent, was mit deinen Daten passiert.</p>
+        <h3>Was wir speichern</h3>
+        <ul>
+          <li>Deine Fotos, dein Name, Alter und deine Sprüche</li>
+          <li>Studienfach, Hochschule und Region(en)</li>
+          <li>Die Telefonnummer, die du selbst angibst</li>
+        </ul>
+        <h3>Wer das sieht</h3>
+        <p>Nur andere freigeschaltete SDW-Mitglieder. Die App ist nicht öffentlich. Deine Telefonnummer wird <b>erst bei einem gegenseitigen Match</b> freigegeben — vorher sieht sie niemand.</p>
+        <h3>Deine Rechte</h3>
+        <p>Du kannst dein Profil jederzeit unsichtbar schalten oder komplett löschen. Verantwortlich ist die Stiftung der Deutschen Wirtschaft.</p>
+        <p><span class="link" onclick="openInfo()">Vollständige Datenschutzerklärung lesen</span></p>
+        <div class="checkrow">
+          <input type="checkbox" id="consentCheck" onchange="toggleConsent()">
+          <label for="consentCheck">Ich willige ein, dass mein Profil und meine angegebene Telefonnummer bei einem Match für andere Mitglieder sichtbar sind.</label>
+        </div>
+        <div class="checkrow">
+          <input type="checkbox" id="ageCheck" onchange="toggleConsent()">
+          <label for="ageCheck">Ich bin mindestens 18 Jahre alt.</label>
+        </div>
+      </div>
+      <div class="cfoot">
+        <button id="consentBtn" onclick="afterConsent()">Zustimmen &amp; weiter</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ APP ============ -->
+  <div class="stage" id="stage-app">
+    <div class="header">
+      <div class="logoicon">
+        <svg viewBox="-12 -12 164 164" width="40" height="40"><clipPath id="hc"><path d="M70 120 C 18 84, 18 40, 46 28 C 60 22, 70 32, 70 44 C 70 32, 80 22, 94 28 C 122 40, 122 84, 70 120 Z"/></clipPath><path d="M70 120 C 18 84, 18 40, 46 28 C 60 22, 70 32, 70 44 C 70 32, 80 22, 94 28 C 122 40, 122 84, 70 120 Z" fill="none" stroke="#fff" stroke-width="16"/><g clip-path="url(#hc)"><rect width="140" height="140" fill="#575756"/><polygon points="140,0 140,140 0,140" fill="#F9C513"/><line x1="140" y1="0" x2="0" y2="140" stroke="#fff" stroke-width="7"/></g></svg>
+      </div>
+      <div class="logotxt"><b><u>S</u>uch <u>D</u>ir <u>W</u>en</b><span>Wir stiften Connections!</span></div>
+    </div>
+
+    <div class="body">
+      <!-- ENTDECKEN -->
+      <div class="screen active" id="s-feed">
+        <div id="feedHost"></div>
+        <div class="actions">
+          <button class="btn btn-rewind" id="bRewind" onclick="rewind()"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7v6h6"/><path d="M3.5 13a9 9 0 1 0 2.3-9.3L3 7"/></svg></button>
+          <button class="btn btn-reject" id="bReject" onclick="decide(false)"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+          <button class="btn btn-like" id="bLike" onclick="decide(true)"><svg viewBox="0 0 24 24"><path d="M12 21s-7.5-4.9-10-9.6C.4 8 2 4.5 5.3 4.5c2 0 3.4 1.2 4.2 2.4l1 1.4 .9-1.4c.8-1.2 2.2-2.4 4.2-2.4C18.9 4.5 20.5 8 19 11.4 16.5 16.1 12 21 12 21z"/></svg></button>
+        </div>
+      </div>
+
+      <!-- MATCHES -->
+      <div class="screen" id="s-matches">
+        <div class="scrtitle">Matches</div>
+        <div id="matchHost"></div>
+      </div>
+
+      <!-- PROFIL -->
+      <div class="screen" id="s-profile">
+        <div class="scrtitle">Mein Profil</div>
+        <div id="profHost"></div>
+      </div>
+    </div>
+
+    <div class="nav">
+      <div class="tab active" data-s="feed" onclick="go('feed')"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="7" height="9" rx="2"/><rect x="13" y="4" width="7" height="6" rx="2"/><rect x="4" y="15" width="7" height="5" rx="2"/><rect x="13" y="12" width="7" height="8" rx="2"/></svg>Entdecken</div>
+      <div class="tab" data-s="matches" onclick="go('matches')"><svg viewBox="0 0 24 24"><path d="M12 20s-7-4.5-9-9C1.5 7.5 3.5 4.5 6.5 4.5c2 0 3.5 1.5 5.5 4 2-2.5 3.5-4 5.5-4 3 0 5 3 3.5 6.5-2 4.5-9 9-9 9z"/></svg>Matches<span class="navbadge" id="matchBadge" style="display:none">0</span></div>
+      <div class="tab" data-s="profile" onclick="go('profile')"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>Profil</div>
+    </div>
+    <div class="hint">↑ = ganzes Profil · links/rechts = Bilder · unten umschalten</div>
+  </div>
+
+  <!-- Profil-Ansicht (für Matches) -->
+  <div class="pview" id="profileView"></div>
+
+  <!-- verstecktes Datei-Feld für Foto-Upload -->
+  <input type="file" id="photoInput" accept="image/*" style="display:none" onchange="onPhotoFile(event)">
+
+  <!-- MODAL -->
+  <div class="modal-bg" id="modal">
+    <div class="modal">
+      <h3 id="m-title">Bearbeiten</h3>
+      <div id="m-field"></div>
+      <div class="hintline" id="m-hint"></div>
+      <div class="mbtns"><button class="cancel" onclick="closeModal()">Abbrechen</button><button class="save" onclick="saveModal()">Speichern</button></div>
+    </div>
+  </div>
+
+  <!-- MATCH POPUP -->
+  <div class="matchpop" id="matchpop">
+    <h2>It's a Match!</h2>
+    <div class="mp-photos"><div id="mpMe"></div><div id="mpThem"></div></div>
+    <p id="mpText"></p>
+    <p>Nummer: <span class="num" id="mpNum"></span></p>
+    <button onclick="closeMatch()">Weiter swipen</button>
+  </div>
+
+</div>
+
+<script>
+/* ---------------- DATEN ---------------- */
+const me = {
+  name:'Laurens', age:21,
+  photos:['https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=600&q=80','https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=600&q=80'],
+  about:'Disziplin schlägt Talent. Auf der Suche nach jemandem, der mithält.',
+  gender:'Mann', seeking:'Frauen',
+  studienfach:'Wirtschaftsingenieurwesen', hochschule:'FH Erfurt', regionen:['Erfurt','Braunschweig'], sprachen:'Deutsch, Englisch',
+  interests:['Eisenbahn','Laufen','Finanzen','Lesen'],
+  prompts:[{q:'Mein Spruch',a:'Disziplin schlägt Talent.'},{q:'Sonntags findet man mich…',a:'beim Laufen oder mit einem Buch'}],
+  phone:'0170 1234567', visible:true, email:'kj.89@web.de'
+};
+
+const candidates = [
+  {name:'Wiktoria',age:23,gender:'Frau',seeking:'Männer',likesYou:true,phone:'0151 23456789',quote:'ich bin der lustigste mensch den ich kenne',about:'Wer mir dumm kommt, wird eiskalt eingeschult ;)',lookingFor:'🥂 Offen — Freunde & mehr',studienfach:'Maschinenbau',hochschule:'TU Braunschweig',regionen:'Hamburg · Bremen · Hannover',sprachen:'Deutsch, Englisch',trinken:'Gesellig am Wochenende',rauchen:'Nichtraucherin',interests:['Maschinenbau','Klettern','Festivals','Fotografie','Techno'],photos:['https://images.unsplash.com/photo-1544005313-94ddf0286df2?w=800&q=80','https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=800&q=80','https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=800&q=80']},
+  {name:'Sophie',age:22,gender:'Frau',seeking:'Männer',likesYou:true,phone:'0160 98765432',quote:'Kaffee, Codes und Kletterhallen',about:'BWL mit Hang zu Bergen.',lookingFor:'💛 Etwas Ernstes',studienfach:'BWL',hochschule:'Uni Köln',regionen:'Köln · Bonn',sprachen:'Deutsch, Englisch, Französisch',trinken:'Selten',rauchen:'Nichtraucherin',interests:['Klettern','Kaffee','Reisen'],photos:['https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=800&q=80','https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=800&q=80']},
+  {name:'Lena',age:21,gender:'Frau',seeking:'Alle',likesYou:false,phone:'',quote:'Mehr Festival als Hörsaal',about:'Lebt für Musik und gute Gespräche.',lookingFor:'✨ Mal schauen',studienfach:'Medienwissenschaft',hochschule:'FU Berlin',regionen:'Berlin',sprachen:'Deutsch, Englisch',trinken:'Gesellig',rauchen:'Gelegentlich',interests:['Festivals','Musik','Kunst'],photos:['https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=800&q=80']},
+  {name:'Jonas',age:24,gender:'Mann',seeking:'Frauen',likesYou:true,phone:'0152 11223344',quote:'Ingenieur mit Hang zum Risiko',about:'Baut Brücken — beruflich und privat.',lookingFor:'💛 Etwas Ernstes',studienfach:'Bauingenieurwesen',hochschule:'RWTH Aachen',regionen:'Aachen · Köln',sprachen:'Deutsch, Englisch',trinken:'Selten',rauchen:'Nichtraucher',interests:['Laufen','Schach','Bouldern'],photos:['https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=800&q=80']}
+];
+
+let current=null;     // aktuell gezeigter Kandidat (Objekt)
+const seen=[];        // schon entschiedene Kandidaten
+const history=[];     // für Zurück (Objekte)
+const matches=[];     // gematchte Personen
+
+const genderMap={'Männer':'Mann','Frauen':'Frau'};
+function wants(seeking,gender){return seeking==='Alle'||genderMap[seeking]===gender;}
+function matchesPref(c){return wants(me.seeking,c.gender) && wants(c.seeking,me.gender);}
+function pickNext(){current=candidates.find(c=>!seen.includes(c)&&matchesPref(c))||null;}
+function refreshPref(){if(!current||!matchesPref(current)){seen.length=0;pickNext();}renderFeed();}
+
+/* ---------------- STAGES ---------------- */
+function toStage(s){document.querySelectorAll('.stage').forEach(e=>e.classList.remove('active'));document.getElementById('stage-'+s).classList.add('active');}
+function consentOK(){return document.getElementById('consentCheck').checked && document.getElementById('ageCheck').checked;}
+function toggleConsent(){document.getElementById('consentBtn').classList.toggle('on',consentOK());}
+function afterConsent(){if(!consentOK())return;toStage('register');}
+function enterApp(){toStage('app');pickNext();renderFeed();renderProfile();renderMatches();}
+function openInfo(){alert('Hier öffnet sich später die vollständige Datenschutzerklärung (eigene Seite).');}
+
+/* ---------------- FEED ---------------- */
+let curPhoto=0;
+function renderFeed(){
+  const host=document.getElementById('feedHost');
+  if(!current){
+    host.innerHTML='<div class="empty"><b>Keine weiteren Profile</b><span>Schau später nochmal vorbei — es kommen neue Mitglieder dazu.</span></div>';
+    document.getElementById('bLike').disabled=true;document.getElementById('bReject').disabled=true;
+    document.getElementById('bRewind').disabled=history.length===0;return;
+  }
+  document.getElementById('bLike').disabled=false;document.getElementById('bReject').disabled=false;
+  document.getElementById('bRewind').disabled=history.length===0;
+  const c=current;curPhoto=0;
+  host.innerHTML=`
+    <div class="card" id="card">
+      ${c.photos.map((p,i)=>`<div class="photo${i===0?' active':''}" style="background-image:url('${p}')"></div>`).join('')}
+      <div class="shade"></div>
+      <div class="bars" id="bars">${c.photos.map((_,i)=>`<i class="${i===0?'on':''}"></i>`).join('')}</div>
+      <div class="tap left" onclick="photo(-1)"></div>
+      <div class="tap right" onclick="photo(1)"></div>
+      <div class="up" onclick="openSheet()"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg></div>
+      <div class="front"><div class="name">${c.name} <span class="age">${c.age}</span></div>
+        <div class="miniquote"><span class="qm">&ldquo;</span><span>${c.quote}</span></div></div>
+      <div class="sheet" id="sheet">
+        <div class="hero" style="background-image:url('${c.photos[0]}')"><div class="htitle"><b>${c.name}</b> <span>${c.age}</span></div>
+          <div class="down" onclick="closeSheet()"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5v14M5 12l7 7 7-7"/></svg></div></div>
+        <div class="block"><div class="bhead"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg> Suche nach</div><div class="big">${c.lookingFor}</div></div>
+        <div class="block"><div class="bhead"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="14" rx="3"/><path d="M7 9h6"/></svg> Über mich</div><div class="about">${c.about}</div></div>
+        <div class="block"><div class="bhead"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg> Basics</div>
+          <div class="row"><svg viewBox="0 0 24 24"><path d="M12 21s7-7 7-12a7 7 0 1 0-14 0c0 5 7 12 7 12z"/><circle cx="12" cy="9" r="2.5"/></svg> Meist in ${c.regionen}</div>
+          <div class="row"><svg viewBox="0 0 24 24"><rect x="6" y="3" width="12" height="18" rx="1"/></svg> ${c.studienfach}</div>
+          <div class="row"><svg viewBox="0 0 24 24"><path d="M2 9l10-5 10 5-10 5z"/><path d="M6 11v5c0 1 3 2 6 2s6-1 6-2v-5"/></svg> ${c.hochschule}</div>
+          <div class="row"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/></svg> ${c.sprachen}</div></div>
+        <div class="block"><div class="bhead"><svg viewBox="0 0 24 24"><path d="M3 7l9-4 9 4-9 4z"/></svg> Lifestyle</div>
+          <div class="sub">Trinken</div><div class="big" style="font-size:17px;">🍷 ${c.trinken}</div>
+          <div class="sub" style="margin-top:13px;">Rauchen</div><div class="big" style="font-size:17px;">🚭 ${c.rauchen}</div></div>
+        <div class="block"><div class="bhead"><svg viewBox="0 0 24 24"><circle cx="7" cy="7" r="3"/><circle cx="17" cy="17" r="3"/></svg> Interessen</div>
+          <div class="chips">${c.interests.map(it=>`<span class="chip">${it}</span>`).join('')}</div></div>
+      </div>
+    </div>`;
+}
+function photo(d){const c=current;if(!c)return;curPhoto=(curPhoto+d+c.photos.length)%c.photos.length;
+  document.querySelectorAll('#card .photo').forEach((p,i)=>p.classList.toggle('active',i===curPhoto));
+  document.querySelectorAll('#bars i').forEach((b,i)=>b.classList.toggle('on',i===curPhoto));}
+function openSheet(){document.getElementById('sheet').classList.add('open');}
+function closeSheet(){const s=document.getElementById('sheet');if(s){s.classList.remove('open');s.scrollTop=0;}}
+
+function decide(liked){
+  if(!current)return;
+  const c=current;seen.push(c);history.push(c);
+  if(liked && c.likesYou){ matches.push(c); renderMatches(); showMatch(c); }
+  pickNext(); renderFeed();
+}
+function rewind(){ if(history.length===0)return;
+  const last=history.pop();
+  const si=seen.indexOf(last); if(si>-1)seen.splice(si,1);
+  const mi=matches.indexOf(last); if(mi>-1){matches.splice(mi,1);renderMatches();}
+  current=last; renderFeed(); }
+
+/* ---------------- PROFIL-ANSICHT (Matches) ---------------- */
+function detailBlocks(c){
+  return `
+    <div class="block"><div class="bhead"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4-4"/></svg> Suche nach</div><div class="big">${c.lookingFor}</div></div>
+    <div class="block"><div class="bhead"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="14" rx="3"/><path d="M7 9h6"/></svg> Über mich</div><div class="about">${c.about}</div></div>
+    <div class="block"><div class="bhead"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg> Basics</div>
+      <div class="row"><svg viewBox="0 0 24 24"><path d="M12 21s7-7 7-12a7 7 0 1 0-14 0c0 5 7 12 7 12z"/><circle cx="12" cy="9" r="2.5"/></svg> Meist in ${c.regionen}</div>
+      <div class="row"><svg viewBox="0 0 24 24"><rect x="6" y="3" width="12" height="18" rx="1"/></svg> ${c.studienfach}</div>
+      <div class="row"><svg viewBox="0 0 24 24"><path d="M2 9l10-5 10 5-10 5z"/><path d="M6 11v5c0 1 3 2 6 2s6-1 6-2v-5"/></svg> ${c.hochschule}</div>
+      <div class="row"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/></svg> ${c.sprachen}</div></div>
+    <div class="block"><div class="bhead"><svg viewBox="0 0 24 24"><path d="M3 7l9-4 9 4-9 4z"/></svg> Lifestyle</div>
+      <div class="sub">Trinken</div><div class="big" style="font-size:17px;">🍷 ${c.trinken}</div>
+      <div class="sub" style="margin-top:13px;">Rauchen</div><div class="big" style="font-size:17px;">🚭 ${c.rauchen}</div></div>
+    <div class="block"><div class="bhead"><svg viewBox="0 0 24 24"><circle cx="7" cy="7" r="3"/><circle cx="17" cy="17" r="3"/></svg> Interessen</div>
+      <div class="chips">${c.interests.map(it=>`<span class="chip">${it}</span>`).join('')}</div></div>`;
+}
+function telUrl(p){return 'tel:'+p.replace(/[^\d+]/g,'');}
+function waUrl(p){return 'https://wa.me/'+p.replace(/\D/g,'').replace(/^0/,'49');}
+function openWa(p){window.open(waUrl(p),'_blank');}
+
+let pvPerson=null,pvCur=0;
+function pvPhoto(d){if(!pvPerson)return;const n=pvPerson.photos.length;pvCur=(pvCur+d+n)%n;
+  document.querySelectorAll('#profileView .photo').forEach((p,k)=>p.classList.toggle('active',k===pvCur));
+  document.querySelectorAll('#pvBars i').forEach((b,k)=>b.classList.toggle('on',k===pvCur));}
+function openProfileView(i){
+  const c=matches[i];pvPerson=c;pvCur=0;const v=document.getElementById('profileView');
+  v.innerHTML=`
+    <div style="position:relative;height:340px;overflow:hidden;background:#222">
+      ${c.photos.map((p,k)=>`<div class="photo${k===0?' active':''}" style="background-image:url('${p}')"></div>`).join('')}
+      <div class="shade"></div>
+      <div class="bars" id="pvBars">${c.photos.map((_,k)=>`<i class="${k===0?'on':''}"></i>`).join('')}</div>
+      <div class="tap left" style="bottom:0;z-index:3" onclick="pvPhoto(-1)"></div>
+      <div class="tap right" style="bottom:0;z-index:3" onclick="pvPhoto(1)"></div>
+      <div style="position:absolute;left:16px;bottom:12px;color:#fff;z-index:4"><b style="font-size:28px;font-weight:800">${c.name}</b> <span style="font-weight:300;font-size:24px">${c.age}</span></div>
+      <div style="position:absolute;right:14px;bottom:14px;z-index:5;width:40px;height:40px;border-radius:50%;border:2px solid #fff;background:rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center;cursor:pointer" onclick="closeProfileView()"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="width:19px;height:19px;stroke:#fff"><path d="M12 5v14M5 12l7 7 7-7"/></svg></div>
+    </div>
+    <div class="pvcontact"><div class="pvnum">${c.phone}</div>
+      <div style="display:flex;gap:10px;margin-top:10px">
+        <a class="pvcall" style="flex:1;text-decoration:none" href="${telUrl(c.phone)}">Anrufen</a>
+        <a class="pvcall" style="flex:1;text-decoration:none;background:#25D366;color:#fff" href="${waUrl(c.phone)}" target="_blank" rel="noopener">WhatsApp</a>
+      </div></div>
+    ${detailBlocks(c)}
+    <div style="height:20px"></div>`;
+  v.classList.add('open');v.scrollTop=0;
+}
+function closeProfileView(){document.getElementById('profileView').classList.remove('open');pvPerson=null;}
+
+/* ---------------- MATCH POPUP ---------------- */
+function showMatch(c){
+  document.getElementById('mpMe').style.backgroundImage=`url('${me.photos[0]}')`;
+  document.getElementById('mpThem').style.backgroundImage=`url('${c.photos[0]}')`;
+  document.getElementById('mpText').textContent=`Du und ${c.name} habt euch gegenseitig geliked. Ihr könnt euch jetzt erreichen.`;
+  document.getElementById('mpNum').textContent=c.phone;
+  document.getElementById('matchpop').classList.add('open');
+}
+function closeMatch(){document.getElementById('matchpop').classList.remove('open');}
+
+/* ---------------- MATCHES SCREEN ---------------- */
+function renderMatches(){
+  const host=document.getElementById('matchHost');
+  const badge=document.getElementById('matchBadge');
+  if(matches.length){badge.style.display='flex';badge.textContent=matches.length;}else{badge.style.display='none';}
+  if(!matches.length){host.innerHTML='<div class="mempty">Noch keine Matches.<br>Like Profile im Entdecken-Tab — bei gegenseitigem Interesse erscheinen sie hier mit Telefonnummer.</div>';return;}
+  host.innerHTML='<div class="mgrid">'+matches.map((m,i)=>`
+    <div class="mcard">
+      <div class="mimg" style="background-image:url('${m.photos[0]}')" onclick="openProfileView(${i})">${i<2?'<div class="newbadge">NEU</div>':''}<span class="mname">${m.name}, ${m.age}</span></div>
+      <div class="mphone" onclick="openProfileView(${i})"><svg viewBox="0 0 24 24"><path d="M5 4h4l2 5-3 2a11 11 0 0 0 5 5l2-3 5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2z"/></svg> ${m.phone}</div>
+      <div class="mcall" onclick="openWa('${m.phone}')">Anrufen / WhatsApp</div>
+    </div>`).join('')+'</div>';
+}
+
+/* ---------------- PROFIL ---------------- */
+function renderProfile(){
+  const host=document.getElementById('profHost');
+  host.innerHTML=`
+    <div class="phead" style="background-image:url('${me.photos[0]}')"><div class="pn"><b>${me.name}, ${me.age}</b><span class="verified"><svg viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg></span></div></div>
+    <div class="pblock"><h4>Fotos</h4><div class="thumbs">
+      ${me.photos.map(p=>`<div class="thumb" style="background-image:url('${p}')"></div>`).join('')}
+      <div class="thumb add" onclick="addPhoto()">+</div></div></div>
+    <div class="pblock"><h4>Über mich</h4>
+      <div class="pedit" onclick="editChoice('gender','Ich bin',['Mann','Frau','Divers'])">Ich bin <span class="v">${me.gender} ›</span></div>
+      <div class="pedit" onclick="editChoice('seeking','Ich suche',['Männer','Frauen','Alle'])">Ich suche <span class="v">${me.seeking} ›</span></div>
+      <div class="pedit" onclick="editField('about','Über mich',true)">Steckbrief <span class="v">${trim(me.about)}</span></div>
+      <div class="pedit" onclick="editField('studienfach','Studienfach')">Studienfach <span class="v">${me.studienfach} ›</span></div>
+      <div class="pedit" onclick="editField('hochschule','Hochschule')">Hochschule <span class="v">${me.hochschule} ›</span></div>
+      <div class="pedit" onclick="editChips('regionen','Region(en)','Füge die Orte hinzu, an denen du oft bist.')">Region(en) <span class="v">${me.regionen.join(' · ')} ›</span></div>
+      <div class="pedit" onclick="editChips('interests','Interessen','Beliebig viele hinzufügen — Enter oder + drückt sie ab.')">Interessen <span class="v">${me.interests.length} ausgewählt ›</span></div></div>
+    <div class="pblock"><h4>Meine Sprüche</h4>
+      ${me.prompts.map((p,i)=>`<div class="promptbox" onclick="editPrompt(${i})"><div class="q">${p.q}</div><div class="a">${p.a}</div></div>`).join('')}
+      <div class="addrow" onclick="addPrompt()">+ Spruch hinzufügen</div></div>
+    <div class="pblock"><h4>Einstellungen</h4>
+      <div class="pedit" onclick="editField('phone','Telefonnummer (wird nur bei Match geteilt)')">Telefonnummer <span class="v">${me.phone} ›</span></div>
+      <div class="pedit" onclick="toggleVisible()">Wer sieht mich <span class="v">${me.visible?'Sichtbar':'Verborgen'} ›</span></div>
+      <div class="pedit">Konto <span class="v">${me.email}</span></div></div>
+    <button class="danger" onclick="if(confirm('Profil wirklich löschen? Alle Daten werden entfernt.'))alert('Profil würde jetzt gelöscht (Backend).')">Profil löschen</button>`;
+}
+function trim(t){return t.length>22?t.slice(0,22)+'… ›':t+' ›';}
+
+/* ---- Editieren via Modal ---- */
+let mCtx=null;
+function openModal(title,html,hint){document.getElementById('m-title').textContent=title;document.getElementById('m-field').innerHTML=html;document.getElementById('m-hint').textContent=hint||'';document.getElementById('modal').classList.add('open');}
+function closeModal(){document.getElementById('modal').classList.remove('open');mCtx=null;}
+function editField(key,label,multi){mCtx={type:'field',key};openModal(label, multi?`<textarea id="mIn">${me[key]}</textarea>`:`<input id="mIn" value="${me[key]}">`);}
+function editChoice(key,label,options){mCtx={type:'field',key};const opts=options.map(o=>`<option${o===me[key]?' selected':''}>${o}</option>`).join('');openModal(label,`<select id="mIn">${opts}</select>`);}
+
+let tempChips=[];
+function editChips(key,label,hint){mCtx={type:'chips',key};tempChips=[...me[key]];
+  openModal(label,`<div class="editchips" id="chipBox"></div><div class="chipadd"><input id="chipIn" placeholder="Hinzufügen…"><button onclick="addChip()">+</button></div>`,hint);
+  renderChips();
+  document.getElementById('chipIn').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();addChip();}});}
+function renderChips(){document.getElementById('chipBox').innerHTML=tempChips.map((c,i)=>`<span class="editchip">${c}<span onclick="removeChip(${i})">&times;</span></span>`).join('')||'<span class="hintline">Noch nichts hinzugefügt.</span>';}
+function addChip(){const inp=document.getElementById('chipIn');const v=inp.value.trim();if(v){tempChips.push(v);inp.value='';renderChips();inp.focus();}}
+function removeChip(i){tempChips.splice(i,1);renderChips();}
+function editPrompt(i){mCtx={type:'prompt',i};const p=me.prompts[i];openModal('Spruch bearbeiten',`<input id="mInQ" value="${p.q}" style="margin-bottom:10px"><textarea id="mIn">${p.a}</textarea>`,'Oben die Frage, unten deine Antwort. Leer lassen = löschen.');}
+function addPrompt(){mCtx={type:'prompt',i:-1};openModal('Spruch hinzufügen',`<input id="mInQ" placeholder="Frage (z.B. Sonntags findet man mich…)" style="margin-bottom:10px"><textarea id="mIn" placeholder="Deine Antwort"></textarea>`);}
+function addPhoto(){document.getElementById('photoInput').click();}
+function onPhotoFile(e){const f=e.target.files&&e.target.files[0];if(!f)return;
+  const r=new FileReader();r.onload=()=>{me.photos.push(r.result);renderProfile();};r.readAsDataURL(f);e.target.value='';}
+function saveModal(){
+  if(!mCtx)return;const val=(document.getElementById('mIn')||{}).value;
+  if(mCtx.type==='field'){me[mCtx.key]=val;}
+  else if(mCtx.type==='chips'){me[mCtx.key]=[...tempChips];}
+  else if(mCtx.type==='prompt'){const q=document.getElementById('mInQ').value.trim();
+    if(mCtx.i===-1){if(q&&val.trim())me.prompts.push({q,a:val.trim()});}
+    else{if(!val.trim())me.prompts.splice(mCtx.i,1);else me.prompts[mCtx.i]={q,a:val.trim()};}}
+  const prefChanged=(mCtx.type==='field'&&(mCtx.key==='gender'||mCtx.key==='seeking'));
+  closeModal();renderProfile();
+  if(prefChanged)refreshPref();
+}
+function toggleVisible(){me.visible=!me.visible;renderProfile();}
+
+/* ---------------- NAV ---------------- */
+function go(s){document.querySelectorAll('.screen').forEach(e=>e.classList.remove('active'));
+  document.getElementById('s-'+s).classList.add('active');
+  document.querySelectorAll('.nav .tab').forEach(t=>t.classList.toggle('active',t.dataset.s===s));}
+</script>
+</body>
+</html>

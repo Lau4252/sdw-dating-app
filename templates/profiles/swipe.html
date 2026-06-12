@@ -1,0 +1,439 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Such Dir Wen — Entdecken</title>
+<meta name="theme-color" content="#F9C513">
+<style>
+  :root{--yellow:#F9C513;--yellow-d:#e0ad00;--grey:#575756;--grey-l:#8a8a89;--bg:#ecebe7;--card:#fff;--line:#e6e4de;--reject:#d35a5a;--radius:20px;}
+  *{box-sizing:border-box;margin:0;padding:0;font-family:-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;-webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;overflow:hidden;background:var(--bg);}
+  #app{height:100%;display:flex;flex-direction:column;max-width:520px;margin:0 auto;position:relative;}
+
+  /* Header */
+  .header{background:var(--yellow);padding:10px 14px;display:flex;align-items:center;gap:10px;flex:0 0 auto;}
+  .logoicon{width:36px;height:36px;flex:0 0 36px;}
+  .logotxt{display:flex;flex-direction:column;line-height:1;}
+  .logotxt b{font-size:18px;font-weight:800;color:var(--grey);letter-spacing:-.5px;}
+  .logotxt b u{color:var(--grey);text-decoration:none;-webkit-text-stroke:1.6px #fff;paint-order:stroke;}
+  .logotxt span{font-size:10px;color:var(--grey);font-style:italic;margin-top:1px;}
+
+  /* Body */
+  .body{flex:1;overflow:hidden;display:flex;flex-direction:column;position:relative;}
+  .screen{display:none;}.screen.active{display:flex;flex-direction:column;flex:1;overflow-y:auto;}
+  .scrtitle{color:var(--grey);font-size:22px;font-weight:800;margin:12px 14px;}
+
+  /* Swipe Card */
+  .cardhost{flex:1;display:flex;flex-direction:column;justify-content:center;padding:14px;position:relative;min-height:0;}
+  .card{position:relative;border-radius:var(--radius);overflow:hidden;aspect-ratio:3/4;background:#222;box-shadow:0 10px 30px rgba(0,0,0,.25);user-select:none;flex-shrink:0;transition:transform .28s cubic-bezier(.4,0,.2,1),opacity .28s;}
+  .card.swiperight{transform:translateX(120%) rotate(8deg);opacity:0;}
+  .card.swipeleft{transform:translateX(-120%) rotate(-8deg);opacity:0;}
+  .photo{position:absolute;inset:0;background-size:cover;background-position:center;transition:opacity .15s;opacity:0;}
+  .photo.active{opacity:1;}
+  .shade{position:absolute;inset:0;z-index:2;pointer-events:none;background:linear-gradient(to top,rgba(0,0,0,.85),rgba(0,0,0,.25) 36%,transparent 56%);}
+  .bars{position:absolute;top:12px;left:14px;right:14px;z-index:5;display:flex;gap:6px;}
+  .bars i{flex:1;height:3.5px;border-radius:3px;background:rgba(255,255,255,.35);}
+  .bars i.on{background:#fff;}
+  .tap{position:absolute;top:0;bottom:120px;width:42%;z-index:3;cursor:pointer;}
+  .tap.left{left:0;}.tap.right{right:0;}
+  .front{position:absolute;left:20px;right:20px;bottom:20px;z-index:4;color:#fff;}
+  .name{font-size:32px;font-weight:800;line-height:1;}
+  .name .age{font-weight:300;font-size:26px;}
+  .miniquote{display:flex;gap:8px;margin-top:8px;font-size:15px;color:#fff;}
+  .miniquote .qm{color:var(--yellow);font-weight:800;font-size:20px;line-height:.8;}
+  .up-btn{position:absolute;right:16px;bottom:108px;z-index:5;width:42px;height:42px;border-radius:50%;border:2px solid #fff;background:rgba(0,0,0,.3);display:flex;align-items:center;justify-content:center;cursor:pointer;}
+  .up-btn svg{width:19px;height:19px;stroke:#fff;}
+  .emptycard{aspect-ratio:3/4;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;background:var(--card);border-radius:var(--radius);color:var(--grey-l);text-align:center;padding:30px;box-shadow:0 10px 30px rgba(0,0,0,.1);}
+  .emptycard b{color:var(--grey);font-size:18px;}
+
+  /* Actions */
+  .actions{display:flex;justify-content:center;align-items:center;gap:18px;padding:14px;flex:0 0 auto;background:var(--bg);}
+  .btn{border:none;cursor:pointer;border-radius:50%;display:flex;align-items:center;justify-content:center;background:#fff;box-shadow:0 5px 16px rgba(0,0,0,.15);transition:transform .1s;}
+  .btn:active{transform:scale(.88);}
+  .btn-rewind{width:52px;height:52px;}
+  .btn-reject{width:64px;height:64px;border:2px solid var(--line);}
+  .btn-like{width:76px;height:76px;background:var(--yellow);box-shadow:0 6px 18px rgba(249,197,19,.55);}
+  .btn-rewind svg{width:22px;height:22px;stroke:var(--grey-l);}
+  .btn-reject svg{width:26px;height:26px;stroke:var(--grey);}
+  .btn-like svg{width:36px;height:36px;fill:#fff;}
+  .btn:disabled{opacity:.4;pointer-events:none;}
+
+  /* Detail Sheet (Overlay) */
+  .sheet{position:absolute;inset:0;z-index:20;background:#fff;border-radius:var(--radius);transform:translateY(100%);transition:transform .32s cubic-bezier(.4,0,.2,1);overflow-y:auto;padding:0 0 20px;}
+  .sheet.open{transform:translateY(0);}
+  .hero{height:220px;background-size:cover;background-position:center;position:relative;border-radius:var(--radius) var(--radius) 0 0;}
+  .hero .down{position:absolute;right:14px;bottom:14px;width:40px;height:40px;border-radius:50%;border:2px solid #fff;background:rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center;cursor:pointer;}
+  .hero .down svg{width:19px;height:19px;stroke:#fff;}
+  .hero .htitle{position:absolute;left:16px;bottom:12px;color:#fff;}
+  .hero .htitle b{font-size:28px;font-weight:800;}.hero .htitle span{font-weight:300;font-size:24px;}
+  .block{margin:12px 14px;background:#f5f4f0;border-radius:14px;padding:14px;}
+  .bhead{display:flex;align-items:center;gap:8px;font-size:12px;font-weight:800;color:var(--grey-l);margin-bottom:10px;text-transform:uppercase;letter-spacing:.4px;}
+  .big{font-size:17px;color:var(--grey);font-weight:600;}
+  .row{display:flex;align-items:center;gap:10px;padding:10px 0;font-size:15px;color:var(--grey);border-top:1px solid var(--line);}
+  .row:first-of-type{border-top:none;}
+  .row svg{width:18px;height:18px;stroke:var(--grey-l);fill:none;flex:0 0 18px;}
+  .about{font-size:16px;color:var(--grey);line-height:1.35;}
+  .sub{font-size:12px;color:var(--grey-l);margin:6px 0 2px;}
+  .chips{display:flex;flex-wrap:wrap;gap:7px;}
+  .chip{font-size:13px;padding:6px 12px;border-radius:14px;background:#e7e5df;color:var(--grey);}
+  .chip.main{background:var(--yellow);color:var(--grey);font-weight:700;}
+
+  /* Nav */
+  .nav{display:flex;justify-content:space-around;align-items:center;background:#fff;border-top:1px solid var(--line);padding:10px 8px 8px;flex:0 0 auto;z-index:10;}
+  .nav .tab{display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;color:var(--grey-l);font-size:11px;font-weight:700;position:relative;}
+  .nav .tab svg{width:24px;height:24px;stroke:currentColor;fill:none;stroke-width:2;}
+  .nav .tab.active{color:var(--yellow-d);}
+  .navbadge{position:absolute;top:-4px;right:4px;background:var(--reject);color:#fff;font-size:10px;font-weight:800;min-width:16px;height:16px;border-radius:8px;display:flex;align-items:center;justify-content:center;padding:0 4px;}
+
+  /* Match Popup */
+  .matchpop{position:absolute;inset:0;z-index:70;background:rgba(0,0,0,.78);display:none;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:30px;text-align:center;}
+  .matchpop.open{display:flex;}
+  .matchpop h2{color:var(--yellow);font-size:32px;font-weight:800;}
+  .matchpop .mp-photos{display:flex;align-items:center;}
+  .matchpop .mp-photos div{width:88px;height:88px;border-radius:50%;border:3px solid var(--yellow);background-size:cover;background-position:center;}
+  .matchpop .mp-photos div:nth-child(2){margin-left:-18px;}
+  .matchpop p{color:#fff;font-size:15px;line-height:1.4;}
+  .matchpop .num{color:var(--yellow);font-weight:800;font-size:18px;}
+  .matchpop button{background:var(--yellow);color:var(--grey);border:none;border-radius:30px;padding:13px 28px;font-weight:800;font-size:15px;cursor:pointer;margin-top:4px;}
+
+  /* Matches Grid */
+  .mgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:0 14px 14px;}
+  .mcard{border-radius:14px;overflow:hidden;background:var(--card);box-shadow:0 4px 14px rgba(0,0,0,.08);}
+  .mcard .mimg{height:130px;background-size:cover;background-position:center;position:relative;cursor:pointer;}
+  .mcard .mimg .mname{position:absolute;left:10px;bottom:8px;color:#fff;font-weight:700;font-size:15px;text-shadow:0 1px 4px rgba(0,0,0,.8);z-index:2;}
+  .mcard .mimg::after{content:"";position:absolute;inset:0;background:linear-gradient(to top,rgba(0,0,0,.7),transparent 55%);}
+  .newbadge{position:absolute;top:8px;left:8px;z-index:3;background:var(--yellow);color:var(--grey);font-size:11px;font-weight:800;padding:3px 9px;border-radius:9px;}
+  .mphone{display:flex;align-items:center;gap:6px;padding:8px 10px;color:var(--grey);font-size:13px;font-weight:600;}
+  .mphone svg{width:15px;height:15px;stroke:var(--yellow-d);fill:none;}
+  .mcall{display:block;text-align:center;background:var(--yellow);color:var(--grey);font-weight:700;font-size:13px;padding:8px;cursor:pointer;text-decoration:none;}
+
+  /* Profile */
+  .pblock{margin:11px 14px;background:var(--card);border-radius:14px;padding:14px;box-shadow:0 3px 12px rgba(0,0,0,.05);}
+  .pblock h4{color:var(--grey-l);font-size:12px;font-weight:800;margin-bottom:10px;text-transform:uppercase;letter-spacing:.5px;}
+  .pedit{display:flex;justify-content:space-between;align-items:center;gap:10px;font-size:15px;color:var(--grey);padding:10px 0;border-top:1px solid var(--line);cursor:pointer;}
+  .pedit:first-of-type{border-top:none;}
+  .pedit .v{color:var(--grey-l);font-size:13px;text-align:right;}
+  .danger{display:block;width:calc(100% - 28px);margin:14px;text-align:center;padding:12px;border-radius:12px;background:#f7e3e3;color:var(--reject);font-weight:700;font-size:14px;border:none;cursor:pointer;}
+
+  /* Match Profile View */
+  .pview{position:absolute;inset:0;z-index:50;background:#fff;transform:translateY(100%);transition:transform .3s cubic-bezier(.4,0,.2,1);overflow-y:auto;}
+  .pview.open{transform:translateY(0);}
+  .pvcontact{margin:13px 14px;background:var(--yellow);border-radius:15px;padding:15px;}
+  .pvcontact .pvnum{font-size:20px;font-weight:800;color:var(--grey);}
+  .pvcontact .pvcall{display:block;text-align:center;margin-top:10px;background:var(--grey);color:#fff;font-weight:700;padding:11px;border-radius:11px;cursor:pointer;text-decoration:none;}
+
+  .hint{text-align:center;color:var(--grey-l);font-size:11px;padding:6px 0 10px;flex:0 0 auto;background:#fff;}
+
+  /* Loading */
+  .loading{display:flex;align-items:center;justify-content:center;height:100%;}
+  .loading .spinner{width:40px;height:40px;border:3px solid var(--line);border-top-color:var(--yellow);border-radius:50%;animation:spin .8s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg);}}
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="header">
+    <div class="logoicon">
+      <svg viewBox="-12 -12 164 164" width="36" height="36"><clipPath id="hc"><path d="M70 120 C 18 84, 18 40, 46 28 C 60 22, 70 32, 70 44 C 70 32, 80 22, 94 28 C 122 40, 122 84, 70 120 Z"/></clipPath><path d="M70 120 C 18 84, 18 40, 46 28 C 60 22, 70 32, 70 44 C 70 32, 80 22, 94 28 C 122 40, 122 84, 70 120 Z" fill="none" stroke="#fff" stroke-width="16"/><g clip-path="url(#hc)"><rect width="140" height="140" fill="#575756"/><polygon points="140,0 140,140 0,140" fill="#F9C513"/><line x1="140" y1="0" x2="0" y2="140" stroke="#fff" stroke-width="7"/></g></svg>
+    </div>
+    <div class="logotxt"><b><u>S</u>uch <u>D</u>ir <u>W</u>en</b><span>Wir stiften Connections!</span></div>
+  </div>
+
+  <div class="body">
+    <!-- ENTDECKEN -->
+    <div class="screen active" id="s-feed">
+      <div class="cardhost" id="cardHost">
+        <div class="loading"><div class="spinner"></div></div>
+      </div>
+      <div class="actions">
+        <button class="btn btn-rewind" id="bRewind" onclick="rewind()"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7v6h6"/><path d="M3.5 13a9 9 0 1 0 2.3-9.3L3 7"/></svg></button>
+        <button class="btn btn-reject" id="bReject" onclick="decide(false)"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.6" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+        <button class="btn btn-like" id="bLike" onclick="decide(true)"><svg viewBox="0 0 24 24"><path d="M12 21s-7.5-4.9-10-9.6C.4 8 2 4.5 5.3 4.5c2 0 3.4 1.2 4.2 2.4l1 1.4 .9-1.4c.8-1.2 2.2-2.4 4.2-2.4C18.9 4.5 20.5 8 19 11.4 16.5 16.1 12 21 12 21z"/></svg></button>
+      </div>
+    </div>
+
+    <!-- MATCHES -->
+    <div class="screen" id="s-matches">
+      <div class="scrtitle">Matches</div>
+      <div id="matchHost"><div class="emptycard"><b>Noch keine Matches</b><p>Swipen, um Verbindungen zu finden!</p></div></div>
+    </div>
+
+    <!-- PROFIL -->
+    <div class="screen" id="s-profile">
+      <div class="scrtitle">Mein Profil</div>
+      <div id="profHost">
+        <div class="pblock">
+          <div class="pedit" onclick="window.location.href='/profiles/edit/'">Profil bearbeiten <span class="v">›</span></div>
+          <div class="pedit" onclick="window.location.href='/datenschutz/'">Datenschutz <span class="v">›</span></div>
+          <div class="pedit" onclick="window.location.href='{% url 'logout' %}'">Abmelden <span class="v">›</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="nav">
+    <div class="tab active" data-s="feed" onclick="go('feed')"><svg viewBox="0 0 24 24"><rect x="4" y="4" width="7" height="9" rx="2"/><rect x="13" y="4" width="7" height="6" rx="2"/><rect x="4" y="15" width="7" height="5" rx="2"/><rect x="13" y="12" width="7" height="8" rx="2"/></svg>Entdecken</div>
+    <div class="tab" data-s="matches" onclick="go('matches')"><svg viewBox="0 0 24 24"><path d="M12 20s-7-4.5-9-9C1.5 7.5 3.5 4.5 6.5 4.5c2 0 3.5 1.5 5.5 4 2-2.5 3.5-4 5.5-4 3 0 5 3 3.5 6.5-2 4.5-9 9-9 9z"/></svg>Matches<span class="navbadge" id="matchBadge" style="display:none">0</span></div>
+    <div class="tab" data-s="profile" onclick="go('profile')"><svg viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21c0-4 4-6 8-6s8 2 8 6"/></svg>Profil</div>
+  </div>
+  <div class="hint">links/rechts = Bilder · oben = Details · unten = Tabs</div>
+
+  <!-- Detail Sheet -->
+  <div class="sheet" id="detailSheet"><div id="sheetContent"></div></div>
+
+  <!-- Match Profile View -->
+  <div class="pview" id="profileView"></div>
+
+  <!-- Match Popup -->
+  <div class="matchpop" id="matchpop">
+    <h2>It's a Match!</h2>
+    <div class="mp-photos"><div id="mpMe"></div><div id="mpThem"></div></div>
+    <p id="mpText"></p>
+    <p>Nummer: <span class="num" id="mpNum"></span></p>
+    <button onclick="closeMatch()">Weiter swipen</button>
+  </div>
+</div>
+
+<script>
+let currentProfile = null;
+let currentPhotoIdx = 0;
+let mePhoto = '';
+let historyStack = [];
+let lastDecision = null;
+
+function go(screen){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('s-'+screen).classList.add('active');
+  document.querySelectorAll('.nav .tab').forEach(t=>t.classList.remove('active'));
+  document.querySelector('.nav .tab[data-s="'+screen+'"]').classList.add('active');
+  if(screen==='matches') loadMatches();
+}
+
+async function fetchMe(){
+  try{
+    const res = await fetch('/profiles/api/me/');
+    if(res.ok){ const d = await res.json(); mePhoto = d.photo || ''; }
+  }catch(e){}
+}
+
+async function fetchNext(){
+  const res = await fetch('/profiles/api/swipe/next/');
+  if(!res.ok){ showEmpty('Fehler beim Laden'); return; }
+  const data = await res.json();
+  if(data.empty){ showEmpty(data.message); return; }
+  currentProfile = data;
+  currentPhotoIdx = 0;
+  renderCard(data);
+}
+
+function showEmpty(msg){
+  document.getElementById('cardHost').innerHTML = '<div class="emptycard"><b>'+(msg||'Keine Profile mehr')+'</b><p>Komm später wieder!</p></div>';
+  document.getElementById('bLike').disabled = true;
+  document.getElementById('bReject').disabled = true;
+  document.getElementById('bRewind').disabled = true;
+}
+
+function renderCard(p){
+  const photos = p.photos || [];
+  const bars = photos.length > 1 ? photos.map((_,i)=>'<i class="'+(i===0?'on':'')+'"></i>').join('') : '';
+  document.getElementById('cardHost').innerHTML = `
+    <div class="card" id="card">
+      ${photos.map((url,i)=>`<div class="photo${i===0?' active':''}" style="background-image:url('${url}')"></div>`).join('')}
+      <div class="shade"></div>
+      ${photos.length > 1 ? '<div class="bars" id="photoBars">'+bars+'</div>' : ''}
+      <div class="tap left" onclick="prevPhoto()"></div>
+      <div class="tap right" onclick="nextPhoto()"></div>
+      <div class="up-btn" onclick="openDetail()"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5M5 12l7-7 7 7"/></svg></div>
+      <div class="front">
+        <div class="name">${p.name} <span class="age">${p.age||''}</span></div>
+        <div class="miniquote"><span class="qm">&ldquo;</span><span>${p.quote||''}</span></div>
+      </div>
+    </div>
+  `;
+  document.getElementById('bLike').disabled = false;
+  document.getElementById('bReject').disabled = false;
+  document.getElementById('bRewind').disabled = historyStack.length === 0;
+}
+
+function nextPhoto(){
+  const photos = currentProfile.photos || [];
+  if(photos.length <= 1) return;
+  currentPhotoIdx = (currentPhotoIdx + 1) % photos.length;
+  updatePhoto();
+}
+function prevPhoto(){
+  const photos = currentProfile.photos || [];
+  if(photos.length <= 1) return;
+  currentPhotoIdx = (currentPhotoIdx - 1 + photos.length) % photos.length;
+  updatePhoto();
+}
+function updatePhoto(){
+  const photos = currentProfile.photos || [];
+  document.querySelectorAll('#card .photo').forEach((el,i)=>el.classList.toggle('active', i===currentPhotoIdx));
+  document.querySelectorAll('#photoBars i').forEach((b,i)=>b.classList.toggle('on', i===currentPhotoIdx));
+}
+
+async function decide(like){
+  if(!currentProfile) return;
+  const card = document.getElementById('card');
+  card.classList.add(like ? 'swiperight' : 'swipeleft');
+  document.getElementById('bLike').disabled = true;
+  document.getElementById('bReject').disabled = true;
+
+  lastDecision = {profile: currentProfile, liked: like};
+  historyStack.push(lastDecision);
+
+  const res = await fetch('/profiles/api/swipe/action/', {
+    method:'POST',
+    headers:{'Content-Type':'application/json','X-CSRFToken':getCookie('csrftoken')},
+    body:JSON.stringify({to_user_id:currentProfile.id, decision: like ? 'like' : 'pass'})
+  });
+  const data = await res.json();
+
+  if(data.match){
+    document.getElementById('mpMe').style.backgroundImage = mePhoto ? `url('${mePhoto}')` : 'none';
+    document.getElementById('mpThem').style.backgroundImage = `url('${data.match_data.photo}')`;
+    document.getElementById('mpText').textContent = `Du und ${data.match_data.name} mögt euch!`;
+    document.getElementById('mpNum').textContent = data.match_data.phone || 'noch nicht angegeben';
+    document.getElementById('matchpop').classList.add('open');
+    updateBadge();
+  }
+
+  setTimeout(fetchNext, 280);
+}
+
+function rewind(){
+  if(historyStack.length === 0) return;
+  const last = historyStack.pop();
+  currentProfile = last.profile;
+  currentPhotoIdx = 0;
+  renderCard(currentProfile);
+  // TODO: Server-seitiges Rewind falls nötig (Swipe-Record löschen)
+}
+
+function closeMatch(){
+  document.getElementById('matchpop').classList.remove('open');
+}
+
+async function loadMatches(){
+  const res = await fetch('/profiles/api/matches/');
+  if(!res.ok) return;
+  const data = await res.json();
+  matchProfiles = data.matches || [];
+  const host = document.getElementById('matchHost');
+  if(!matchProfiles.length){
+    host.innerHTML = '<div class="emptycard"><b>Noch keine Matches</b><p>Swipen, um Verbindungen zu finden!</p></div>';
+    return;
+  }
+  host.innerHTML = '<div class="mgrid">' + matchProfiles.map((m,i)=>`
+    <div class="mcard">
+      <div class="mimg" style="background-image:url('${m.photo||''}')" onclick="openMatchProfile(${i})">
+        ${i < 2 ? '<div class="newbadge">NEU</div>' : ''}
+        <span class="mname">${m.name} ${m.age||''}</span>
+      </div>
+      <div class="mphone"><svg viewBox="0 0 24 24"><path d="M5 4h4l2 5-3 2a11 11 0 0 0 5 5l2-3 5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2z"/></svg> ${m.phone || 'keine Nummer'}</div>
+      ${m.phone ? `<a class="mcall" href="tel:${m.phone.replace(/[^\d+]/g,'')}">Anrufen</a>` : ''}
+    </div>
+  `).join('') + '</div>';
+  updateBadge(matchProfiles.length);
+}
+
+let matchProfiles = [];
+function openMatchProfile(idx){
+  const m = matchProfiles[idx];
+  if(!m) return;
+  const v = document.getElementById('profileView');
+  const interests = (m.interests||[]).map(i=>'<span class="chip">'+i+'</span>').join('');
+  v.innerHTML = `
+    <div style="position:relative;height:260px;overflow:hidden;background:#222">
+      <div style="position:absolute;inset:0;background-size:cover;background-position:center;background-image:url('${m.photo||''}')"></div>
+      <div class="shade"></div>
+      <div style="position:absolute;left:16px;bottom:12px;color:#fff;z-index:4"><b style="font-size:26px;font-weight:800">${m.name}</b> <span style="font-weight:300;font-size:22px">${m.age||''}</span></div>
+      <div style="position:absolute;right:14px;bottom:14px;z-index:5;width:40px;height:40px;border-radius:50%;border:2px solid #fff;background:rgba(0,0,0,.35);display:flex;align-items:center;justify-content:center;cursor:pointer" onclick="closeMatchProfile()"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" style="width:19px;height:19px;stroke:#fff"><path d="M12 5v14M5 12l7 7 7-7"/></svg></div>
+    </div>
+    <div class="pvcontact"><div class="pvnum">${m.phone || 'keine Nummer'}</div>
+      ${m.phone ? `<a class="pvcall" href="tel:${m.phone.replace(/[^\d+]/g,'')}">Anrufen</a>` : ''}
+    </div>
+    <div class="block"><div class="bhead">Über mich</div><div class="about">${m.about||'Noch nichts geschrieben.'}</div></div>
+    <div class="block"><div class="bhead">Details</div>
+      <div class="row">🎓 ${m.studienfach||'-'}</div>
+      <div class="row">🏫 ${m.hochschule||'-'}</div>
+      <div class="row">🌍 ${m.regionen||'-'}</div>
+      <div class="row">🗣️ ${m.sprachen||'-'}</div>
+    </div>
+    <div class="block"><div class="bhead">Interessen</div><div class="chips">${interests||'<span class="chip">-</span>'}</div></div>
+    <div style="height:20px"></div>
+  `;
+  v.classList.add('open'); v.scrollTop=0;
+}
+function closeMatchProfile(){ document.getElementById('profileView').classList.remove('open'); }
+
+function updateBadge(n){
+  const badge = document.getElementById('matchBadge');
+  if(n === undefined) n = parseInt(badge.textContent||'0') + 1;
+  badge.textContent = n;
+  badge.style.display = n > 0 ? 'flex' : 'none';
+}
+
+function getCookie(name){
+  let c = document.cookie.match('(^|;)\\s*' + name + '\\s*=\\s*([^;]+)');
+  return c ? c.pop() : '';
+}
+
+/* Detail Sheet */
+let sheetOpen = false;
+function openDetail(){
+  if(!currentProfile) return;
+  const p = currentProfile;
+  const interests = (p.interests||[]).map(i=>'<span class="chip">'+i+'</span>').join('');
+  const prompts = (p.prompts||[]).map(pr=>`<div class="block" style="margin-top:8px"><div class="sub">${pr.q}</div><div class="big" style="font-size:16px">${pr.a}</div></div>`).join('');
+  const regionStr = (p.regionen||[]).join(' · ') || '-';
+  document.getElementById('sheetContent').innerHTML = `
+    <div class="hero" style="background-image:url('${(p.photos||[''])[0]}')">
+      <div class="down" onclick="closeDetail()"><svg viewBox="0 0 24 24" fill="none" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 15l6-6 6 6"/></svg></div>
+      <div class="htitle"><b>${p.name}</b> <span>${p.age||''}</span></div>
+    </div>
+    ${p.looking_for ? `<div class="block"><div class="bhead">Suche nach</div><div class="big">${p.looking_for}</div></div>` : ''}
+    <div class="block"><div class="bhead">Über mich</div><div class="about">${p.about||'Noch nichts geschrieben.'}</div></div>
+    <div class="block"><div class="bhead">Basics</div>
+      <div class="row"><svg viewBox="0 0 24 24"><path d="M12 21s7-7 7-12a7 7 0 1 0-14 0c0 5 7 12 7 12z"/><circle cx="12" cy="9" r="2.5"/></svg> Meist in ${regionStr}</div>
+      <div class="row"><svg viewBox="0 0 24 24"><rect x="6" y="3" width="12" height="18" rx="1"/></svg> ${p.studienfach||'-'}</div>
+      <div class="row"><svg viewBox="0 0 24 24"><path d="M2 9l10-5 10 5-10 5z"/><path d="M6 11v5c0 1 3 2 6 2s6-1 6-2v-5"/></svg> ${p.hochschule||'-'}</div>
+      <div class="row"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M3 12h18"/></svg> ${p.sprachen||'-'}</div>
+    </div>
+    ${p.trinken ? `<div class="block"><div class="bhead">Lifestyle</div><div class="sub">Trinken</div><div class="big" style="font-size:16px">🍷 ${p.trinken}</div>${p.rauchen ? `<div class="sub" style="margin-top:12px">Rauchen</div><div class="big" style="font-size:16px">🚭 ${p.rauchen}</div>` : ''}</div>` : ''}
+    <div class="block"><div class="bhead">Interessen</div><div class="chips">${interests || '<span class="chip">-</span>'}</div></div>
+    ${prompts}
+  `;
+  document.getElementById('detailSheet').classList.add('open');
+  sheetOpen = true;
+}
+function closeDetail(){
+  document.getElementById('detailSheet').classList.remove('open');
+  sheetOpen = false;
+}
+
+/* Swipe-Gesten */
+let startX = 0, startY = 0;
+document.addEventListener('touchstart', e=>{ startX = e.changedTouches[0].screenX; startY = e.changedTouches[0].screenY; });
+document.addEventListener('touchend', e=>{
+  const endX = e.changedTouches[0].screenX;
+  const endY = e.changedTouches[0].screenY;
+  const diffX = endX - startX;
+  const diffY = endY - startY;
+  if(Math.abs(diffY) > Math.abs(diffX) && diffY < -60 && !sheetOpen){
+    openDetail(); return;
+  }
+  if(Math.abs(diffX) > 80 && !sheetOpen){
+    if(diffX > 0) decide(true); else decide(false);
+  }
+});
+
+/* Init */
+fetchMe();
+fetchNext();
+</script>
+</body>
+</html>

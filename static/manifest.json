@@ -1,20 +1,49 @@
 {
   "name": "StipConnect",
-  "short_name": "Stip",
-  "start_url": "/",
+  "short_name": "StipConnect",
+  "description": "Dating-App fuer Stipendiatinnen und Stipendiaten der Stiftung der Deutschen Wirtschaft",
+  "start_url": "/browse/",
+  "scope": "/",
   "display": "standalone",
-  "background_color": "#ffffff",
-  "theme_color": "#4f46e5",
+  "orientation": "portrait",
+  "background_color": "#ecebe7",
+  "theme_color": "#F9C513",
+  "lang": "de",
+  "dir": "ltr",
+  "categories": ["social", "dating", "lifestyle"],
   "icons": [
     {
       "src": "/static/images/icon-192.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any"
     },
     {
       "src": "/static/images/icon-512.png",
       "sizes": "512x512",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/static/images/icon-maskable-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/static/images/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
     }
-  ]
+  ],
+  "screenshots": [
+    {
+      "src": "/static/images/screenshot-narrow.png",
+      "sizes": "750x1334",
+      "type": "image/png",
+      "form_factor": "narrow"
+    }
+  ],
+  "prefer_related_applications": false
 }

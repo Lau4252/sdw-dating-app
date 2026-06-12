@@ -11,6 +11,8 @@ services:
       - ./media:/app/media
       - ./db.sqlite3:/app/db.sqlite3
       - ./staticfiles:/app/staticfiles
+      - ./templates:/app/templates
+      - ./profiles:/app/profiles
     expose:
       - "8000"
     networks:
@@ -36,11 +38,11 @@ services:
     image: cloudflare/cloudflared:latest
     container_name: stipconnect_tunnel
     restart: unless-stopped
-    command: tunnel --no-autoupdate run --token ${TUNNEL_TOKEN}
-    env_file:
-      - .env
-    networks:
-      - stipconnect
+    network_mode: host
+    command: tunnel --no-autoupdate --config /etc/cloudflared/stipconnect.yml run
+    volumes:
+      - /home/laurensmain/.cloudflared/stipconnect.yml:/etc/cloudflared/stipconnect.yml:ro
+      - /home/laurensmain/.cloudflared/08d783d9-052e-4b9c-ad72-1c3dc9b0d492.json:/home/laurensmain/.cloudflared/08d783d9-052e-4b9c-ad72-1c3dc9b0d492.json:ro
 
 volumes:
   caddy_data:

@@ -1,7 +1,4 @@
 :80 {
-    root * /srv/static
-    file_server
-
     handle /media/* {
         root * /srv
         file_server

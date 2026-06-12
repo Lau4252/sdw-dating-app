@@ -2,41 +2,152 @@
 <html lang="de">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="theme-color" content="#4f46e5">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="theme-color" content="#F9C513">
+    <meta name="msapplication-TileColor" content="#F9C513">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="StipConnect">
+    <meta name="mobile-web-app-capable" content="yes">
     <link rel="manifest" href="/static/manifest.json">
+    <link rel="apple-touch-icon" href="/static/images/icon-192.png">
+    <link rel="mask-icon" href="/static/images/icon-192.png" color="#F9C513">
+    <!-- Splash Screens for iOS PWA -->
+    <link rel="apple-touch-startup-image" href="/static/images/splash-2048x2732.png" media="screen and (device-width: 1024px) and (device-height: 1366px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
+    <link rel="apple-touch-startup-image" href="/static/images/splash-1668x2388.png" media="screen and (device-width: 834px) and (device-height: 1194px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
+    <link rel="apple-touch-startup-image" href="/static/images/splash-1536x2048.png" media="screen and (device-width: 768px) and (device-height: 1024px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
+    <link rel="apple-touch-startup-image" href="/static/images/splash-1125x2436.png" media="screen and (device-width: 375px) and (device-height: 812px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
+    <link rel="apple-touch-startup-image" href="/static/images/splash-1242x2688.png" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
+    <link rel="apple-touch-startup-image" href="/static/images/splash-828x1792.png" media="screen and (device-width: 414px) and (device-height: 896px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
+    <link rel="apple-touch-startup-image" href="/static/images/splash-750x1334.png" media="screen and (device-width: 375px) and (device-height: 667px) and (-webkit-device-pixel-ratio: 2) and (orientation: portrait)">
+    <link rel="apple-touch-startup-image" href="/static/images/splash-1242x2208.png" media="screen and (device-width: 414px) and (device-height: 736px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)">
     <title>{% block title %}StipConnect{% endblock %}</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="/static/css/custom.css">
 </head>
 <body class="bg-gray-50 text-gray-900 flex flex-col min-h-screen">
-    <nav class="bg-indigo-600 text-white shadow-lg">
+
+    <!-- Offline Badge -->
+    <div id="offlineBadge" class="offline-badge">Keine Internetverbindung</div>
+
+    <!-- iOS PWA Install Banner -->
+    <div id="iosInstallBanner" class="ios-install-banner" style="display:none;">
+        <span>📲 Tippe unten auf <strong>Teilen</strong> und dann <strong>„Zum Home-Bildschirm"</strong>, um StipConnect als App zu nutzen.</span>
+        <button onclick="dismissIosBanner()" aria-label="Schließen">✕</button>
+    </div>
+
+    <!-- Chrome / Edge PWA Install Banner -->
+    <div id="chromeInstallBanner" class="chrome-install-banner" style="display:none;">
+        <span>📲 StipConnect als App installieren?</span>
+        <div style="display:flex;gap:8px;align-items:center;">
+            <button id="chromeInstallBtn">Installieren</button>
+            <button onclick="dismissChromeBanner()" aria-label="Schließen">✕</button>
+        </div>
+    </div>
+
+    <!-- Top Navigation -->
+    <nav class="bg-indigo-600 text-white shadow-lg sticky top-0 z-50">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="flex justify-between items-center h-16">
-                <a href="/" class="text-xl font-bold tracking-tight">StipConnect</a>
-                <div class="flex items-center space-x-6">
-                    <a href="{% url 'profile_list' %}" class="hover:text-indigo-200 transition">Alle Profile</a>
+                <a href="/" class="text-xl font-bold tracking-tight shrink-0">StipConnect</a>
+                <div class="flex items-center overflow-x-auto whitespace-nowrap gap-4 no-scrollbar ml-4 text-sm sm:text-base sm:gap-6 sm:overflow-visible">
+                    <a href="{% url 'browse' %}" class="hover:text-indigo-200 transition shrink-0">Entdecken</a>
+                    <a href="{% url 'my_matches' %}" class="hover:text-indigo-200 transition shrink-0">Matches</a>
+                    <a href="{% url 'browse' %}" class="hover:text-indigo-200 transition shrink-0 hidden sm:inline">Alle Profile</a>
                     {% if user.is_authenticated %}
-                        <a href="{% url 'profile_detail' pk=user.profile.pk %}" class="hover:text-indigo-200 transition">Mein Profil</a>
+                        <a href="{% url 'profile_detail' pk=user.profile.pk %}" class="hover:text-indigo-200 transition shrink-0">Mein Profil</a>
+                        {% if user.profile.is_beta_tester %}
+                            <a href="{% url 'feedback_form' %}" class="hover:text-indigo-200 transition shrink-0 hidden sm:inline">Feedback 🎙️</a>
+                        {% endif %}
+                        <a href="{% url 'logout' %}" class="hover:text-indigo-200 transition shrink-0">Abmelden</a>
                     {% endif %}
                 </div>
             </div>
         </div>
     </nav>
 
-    <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
+    <!-- Main Content -->
+    <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full pb-24 sm:pb-8">
         {% block content %}{% endblock %}
     </main>
 
-    <footer class="bg-white border-t mt-auto">
+    <!-- Footer (Desktop only) -->
+    <footer class="bg-white border-t mt-auto hidden sm:block">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 text-center text-sm text-gray-500">
             © {% now "Y" %} StipConnect — <a href="{% url 'datenschutz' %}" class="underline hover:text-gray-700">Datenschutz</a>
         </div>
     </footer>
 
+    <!-- Bottom Tab Bar (Mobile only, authenticated) -->
+    {% if user.is_authenticated %}
+    <nav class="mobile-tab-bar sm:hidden">
+        <a href="{% url 'browse' %}" class="tab-item {% if request.resolver_match.url_name == 'browse' %}active{% endif %}">
+            <span class="tab-icon">🔍</span>
+            <span class="tab-label">Entdecken</span>
+        </a>
+        <a href="{% url 'my_matches' %}" class="tab-item {% if request.resolver_match.url_name == 'my_matches' %}active{% endif %}">
+            <span class="tab-icon">💛</span>
+            <span class="tab-label">Matches</span>
+        </a>
+        <a href="{% url 'profile_detail' pk=user.profile.pk %}" class="tab-item {% if request.resolver_match.url_name == 'profile_detail' %}active{% endif %}">
+            <span class="tab-icon">👤</span>
+            <span class="tab-label">Profil</span>
+        </a>
+    </nav>
+    {% endif %}
+
     <script>
+        // ── Service Worker ─────────────────────────────────────
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.register('/static/js/sw.js');
+        }
+
+        // ── Offline Badge ──────────────────────────────────────
+        const badge = document.getElementById('offlineBadge');
+        function updateOnlineStatus() {
+            if (!navigator.onLine) badge.classList.add('visible');
+            else badge.classList.remove('visible');
+        }
+        window.addEventListener('online', updateOnlineStatus);
+        window.addEventListener('offline', updateOnlineStatus);
+        updateOnlineStatus();
+
+        // ── Chrome / Edge Install Prompt ───────────────────────
+        let deferredPrompt = null;
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            if (!localStorage.getItem('pwa-install-dismissed')) {
+                document.getElementById('chromeInstallBanner').style.display = 'flex';
+            }
+        });
+        document.getElementById('chromeInstallBtn')?.addEventListener('click', async () => {
+            if (!deferredPrompt) return;
+            deferredPrompt.prompt();
+            const { outcome } = await deferredPrompt.userChoice;
+            if (outcome === 'accepted') localStorage.setItem('pwa-installed', '1');
+            deferredPrompt = null;
+            document.getElementById('chromeInstallBanner').style.display = 'none';
+        });
+        function dismissChromeBanner() {
+            localStorage.setItem('pwa-install-dismissed', String(Date.now()));
+            document.getElementById('chromeInstallBanner').style.display = 'none';
+        }
+
+        // ── iOS Safari Install Banner ──────────────────────────
+        const isIos = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+        const isStandalone = window.navigator.standalone === true;
+        if (isIos && !isStandalone) {
+            const dismissed = localStorage.getItem('ios-install-dismissed');
+            let visits = parseInt(localStorage.getItem('visits') || '0', 10) + 1;
+            localStorage.setItem('visits', String(visits));
+            if (!dismissed && visits >= 2) {
+                document.getElementById('iosInstallBanner').style.display = 'flex';
+            }
+        }
+        function dismissIosBanner() {
+            localStorage.setItem('ios-install-dismissed', String(Date.now()));
+            document.getElementById('iosInstallBanner').style.display = 'none';
         }
     </script>
 </body>

@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+
+{% block title %}Feedback-Übersicht — StipConnect Admin{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto mt-8">
+    <h1 class="text-2xl font-bold text-[#575756] mb-6">📬 Feedback-Übersicht</h1>
+
+    <div class="flex flex-wrap gap-3 mb-6">
+        <a href="{% url 'admin_feedback' %}" class="px-4 py-2 rounded-lg text-sm font-medium transition {% if not typ_filter %}bg-[#F9C513] text-[#575756]{% else %}bg-gray-200 text-gray-700 hover:bg-gray-300{% endif %}">Alle ({{ total_count }})</a>
+        {% for key, label in type_choices %}
+            <a href="?typ={{ key }}" class="px-4 py-2 rounded-lg text-sm font-medium transition {% if typ_filter == key %}bg-[#F9C513] text-[#575756]{% else %}bg-gray-200 text-gray-700 hover:bg-gray-300{% endif %}">
+                {{ label }}
+            </a>
+        {% endfor %}
+    </div>
+
+    <div class="space-y-4">
+        {% for fb in feedbacks %}
+            <div class="bg-white rounded-[20px] shadow-[0_4px_15px_rgba(0,0,0,.1)] p-6">
+                <div class="flex justify-between items-start mb-3">
+                    <div class="flex items-center gap-3">
+                        <span class="px-3 py-1 rounded-full text-xs font-semibold 
+                            {% if fb.typ == 'bug' %}bg-red-100 text-red-800
+                            {% elif fb.typ == 'feature' %}bg-blue-100 text-blue-800
+                            {% elif fb.typ == 'feedback' %}bg-green-100 text-green-800
+                            {% else %}bg-gray-100 text-gray-800{% endif %}">
+                            {{ fb.get_typ_display }}
+                        </span>
+                        <span class="text-sm text-gray-600">{{ fb.user.email }}</span>
+                    </div>
+                    <span class="text-xs text-gray-400">{{ fb.created_at|date:"d.m.Y H:i" }}</span>
+                </div>
+                <p class="text-gray-800 whitespace-pre-wrap">{{ fb.text }}</p>
+            </div>
+        {% empty %}
+            <p class="text-gray-500 text-center py-12">Noch kein Feedback eingegangen. 🎉</p>
+        {% endfor %}
+    </div>
+
+    {% if is_paginated %}
+        <div class="flex justify-center gap-2 mt-8">
+            {% if page_obj.has_previous %}
+                <a href="?page={{ page_obj.previous_page_number }}{% if typ_filter %}&typ={{ typ_filter }}{% endif %}" class="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300">← Zurück</a>
+            {% endif %}
+            <span class="px-4 py-2 bg-[#F9C513] text-[#575756] rounded-lg font-semibold">Seite {{ page_obj.number }}</span>
+            {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}{% if typ_filter %}&typ={{ typ_filter }}{% endif %}" class="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300">Weiter →</a>
+            {% endif %}
+        </div>
+    {% endif %}
+</div>
+{% endblock %}

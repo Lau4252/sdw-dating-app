@@ -83,5 +83,16 @@ Thumbs.db
 # Docker
 docker-compose.override.yml
 
+# Backups
+db.sqlite3.backup-*
+
+# Claude Code
+.claude/
+
+# Stray files
+1
+*.tmp
+*.lock
+
 # Node (falls wir später JS bauen)
 node_modules/

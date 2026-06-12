@@ -12,11 +12,12 @@ class CloudflareAccessMiddlewareTestCase(TestCase):
         self.factory = RequestFactory()
         self.middleware = CloudflareAccessMiddleware(lambda req: "ok")
 
+    @patch('profiles.models.Profile.objects.get_or_create')
     @patch('stipconnect.middleware.login')
     @patch('stipconnect.middleware.User.objects.get_or_create')
     @patch('stipconnect.middleware.settings')
     def test_debug_fallback_dev_auth_email(
-        self, mock_settings, mock_get_or_create, mock_login
+        self, mock_settings, mock_get_or_create, mock_login, mock_profile_get_or_create
     ):
         """DEBUG + kein Header -> DEV_AUTH_EMAIL wird benutzt."""
         mock_settings.DEBUG = True
@@ -26,6 +27,7 @@ class CloudflareAccessMiddlewareTestCase(TestCase):
             request.user.is_authenticated = False
             mock_user = MagicMock()
             mock_get_or_create.return_value = (mock_user, True)
+            mock_profile_get_or_create.return_value = (MagicMock(), True)
 
             response = self.middleware(request)
 
@@ -42,11 +44,12 @@ class CloudflareAccessMiddlewareTestCase(TestCase):
                 request, mock_user, backend='django.contrib.auth.backends.ModelBackend'
             )
 
+    @patch('profiles.models.Profile.objects.get_or_create')
     @patch('stipconnect.middleware.login')
     @patch('stipconnect.middleware.User.objects.get_or_create')
     @patch('stipconnect.middleware.settings')
     def test_debug_header_priority(
-        self, mock_settings, mock_get_or_create, mock_login
+        self, mock_settings, mock_get_or_create, mock_login, mock_profile_get_or_create
     ):
         """DEBUG + Header vorhanden -> Header gewinnt, DEV_AUTH_EMAIL ignoriert."""
         mock_settings.DEBUG = True
@@ -57,6 +60,7 @@ class CloudflareAccessMiddlewareTestCase(TestCase):
             request.user.is_authenticated = False
             mock_user = MagicMock()
             mock_get_or_create.return_value = (mock_user, False)
+            mock_profile_get_or_create.return_value = (MagicMock(), False)
 
             self.middleware(request)
 
@@ -84,11 +88,12 @@ class CloudflareAccessMiddlewareTestCase(TestCase):
         self.assertEqual(response, "ok")
         mock_login.assert_not_called()
 
+    @patch('profiles.models.Profile.objects.get_or_create')
     @patch('stipconnect.middleware.login')
     @patch('stipconnect.middleware.User.objects.get_or_create')
     @patch('stipconnect.middleware.settings')
     def test_production_valid_header(
-        self, mock_settings, mock_get_or_create, mock_login
+        self, mock_settings, mock_get_or_create, mock_login, mock_profile_get_or_create
     ):
         """DEBUG=False + Header -> Benutzer wird erstellt/eingeloggt."""
         mock_settings.DEBUG = False
@@ -98,6 +103,7 @@ class CloudflareAccessMiddlewareTestCase(TestCase):
         request.user.is_authenticated = False
         mock_user = MagicMock()
         mock_get_or_create.return_value = (mock_user, False)
+        mock_profile_get_or_create.return_value = (MagicMock(), False)
 
         response = self.middleware(request)
 

@@ -2,10 +2,337 @@ html {
     scroll-behavior: smooth;
 }
 
+/* Prevent text zoom on mobile, respect safe areas */
+body {
+    -webkit-text-size-adjust: 100%;
+    overscroll-behavior-y: none;
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+}
+
 .aspect-photo {
     aspect-ratio: 1 / 1;
 }
 
 input[type="file"] {
     padding: 0.5rem;
+}
+
+/* Hide scrollbar utility */
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+
+/* ==============================
+   MOBILE / PWA ENHANCEMENTS
+   ============================== */
+
+/* Remove tap highlight on mobile WebKit */
+* {
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+}
+
+/* Minimum 44×44 px touch targets everywhere */
+button, a, input, select, textarea, [role="button"],
+.tap-target {
+    min-height: 44px;
+    min-width: 44px;
+}
+
+/* Active / pressed state feedback */
+button:active, a:active,
+.btn:active, .btn-like:active, .btn-reject:active, .btn-rewind:active {
+    transform: scale(0.95);
+    opacity: 0.85;
+    transition: transform 0.08s ease, opacity 0.08s ease;
+}
+
+/* Disable double-tap zoom globally (Chrome 32+) */
+html {
+    touch-action: manipulation;
+}
+
+/* Safari overscroll-bounce prevention on body wrapper */
+body {
+    overscroll-behavior: none;
+}
+
+/* Standalone-mode specific tweaks (when launched from home screen) */
+@media all and (display-mode: standalone) {
+    body {
+        /* extra bottom padding for home indicator on iPhone X+ */
+        padding-bottom: max(env(safe-area-inset-bottom), 34px);
+    }
+    nav {
+        /* push nav below notch on iOS */
+        padding-top: env(safe-area-inset-top);
+    }
+    footer {
+        padding-bottom: env(safe-area-inset-bottom);
+    }
+}
+
+/* iOS PWA status bar tint */
+meta[name="apple-mobile-web-app-status-bar-style"] ~ body {
+    background-color: #ecebe7;
+}
+
+/* Smooth card lift on touch (hover fallback for desktop) */
+.card, .profile-card, .mcard {
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+    will-change: transform;
+}
+
+.card:active, .profile-card:active, .mcard:active {
+    transform: scale(0.985);
+    box-shadow: 0 4px 14px rgba(0, 0, 0, 0.08) !important;
+}
+
+/* Swipe gesture indicators */
+.swipe-hint {
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+.show-hint .swipe-hint {
+    opacity: 1;
+}
+
+/* Pull-to-refresh guard on scroll containers */
+.scroll-container {
+    overscroll-behavior-y: contain;
+}
+
+/* Ensure images don't bleed outside rounded corners on mobile */
+img, .hero, .phead, .mimg {
+    border-radius: inherit;
+}
+
+/* ==============================
+   OFFLINE BADGE
+   ============================== */
+@keyframes pulse-dot {
+    0%, 100% { opacity: 1; transform: scale(1); }
+    50% { opacity: 0.4; transform: scale(0.8); }
+}
+
+.offline-badge {
+    position: fixed;
+    top: calc(env(safe-area-inset-top, 0px) + 10px);
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 9999;
+    background: rgba(0, 0, 0, 0.75);
+    color: #fff;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 6px 16px;
+    border-radius: 20px;
+    backdrop-filter: blur(8px);
+    display: none;
+    pointer-events: none;
+}
+
+.offline-badge.visible {
+    display: block;
+    animation: pulse-dot 1.6s infinite ease-in-out;
+}
+
+/* ==============================
+   MOBILE TAB BAR
+   ============================== */
+.mobile-tab-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    z-index: 9998;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    background: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(12px);
+    -webkit-backdrop-filter: blur(12px);
+    border-top: 1px solid rgba(0, 0, 0, 0.06);
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    padding-top: 6px;
+    height: calc(56px + env(safe-area-inset-bottom, 0px));
+    transition: transform 0.2s ease;
+}
+
+.tab-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 2px;
+    text-decoration: none;
+    color: #8a8a89;
+    min-height: 48px;
+    min-width: 48px;
+    transition: color 0.15s ease;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+}
+
+.tab-item.active {
+    color: #F9C513;
+}
+
+.tab-item:active {
+    opacity: 0.7;
+    transform: scale(0.92);
+    transition: transform 0.08s, opacity 0.08s;
+}
+
+.tab-icon {
+    font-size: 22px;
+    line-height: 1;
+    display: block;
+    filter: grayscale(0.15);
+}
+
+.tab-item.active .tab-icon {
+    filter: grayscale(0);
+}
+
+.tab-label {
+    font-size: 10px;
+    font-weight: 600;
+    line-height: 1.2;
+}
+
+/* ==============================
+   INSTALL BANNERS
+   ============================== */
+.ios-install-banner,
+.chrome-install-banner {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 10000;
+    display: none;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    background: rgba(255, 255, 255, 0.96);
+    backdrop-filter: blur(10px);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+    padding: 12px 16px;
+    font-size: 13px;
+    color: #575756;
+    padding-top: max(12px, env(safe-area-inset-top));
+}
+
+.ios-install-banner button,
+.chrome-install-banner button {
+    background: none;
+    border: none;
+    font-size: 18px;
+    color: #8a8a89;
+    cursor: pointer;
+    min-height: 32px;
+    min-width: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 8px;
+    transition: background 0.15s;
+}
+
+.ios-install-banner button:active,
+.chrome-install-banner button:active {
+    background: rgba(0, 0, 0, 0.05);
+}
+
+.chrome-install-banner button#chromeInstallBtn {
+    background: #F9C513;
+    color: #575756;
+    font-size: 13px;
+    font-weight: 700;
+    padding: 8px 16px;
+    border-radius: 10px;
+    min-height: 36px;
+}
+
+/* ==============================
+   TOUCH-FRIENDLY BUTTONS IN GRID
+   ============================== */
+.grid > div {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+}
+
+.grid a {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+}
+
+button[type="button"].interest-btn {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    transition: transform .08s, opacity .08s, background-color .15s;
+}
+
+button[type="button"].interest-btn:active {
+    transform: scale(0.96);
+    opacity: 0.85;
+}
+
+button[type="button"].interest-btn.sent {
+    background: #28a745 !important;
+    color: #fff !important;
+}
+
+/* ==============================
+   MOBILE RESPONSIVE ADJUSTMENTS
+   ============================== */
+@media (max-width: 640px) {
+    /* More compact nav on very small screens */
+    nav .text-xl {
+        font-size: 1.1rem;
+    }
+    /* Ensure main content has room above tab bar */
+    main {
+        padding-bottom: 80px !important;
+    }
+    /* Footer hidden on mobile (tab bar replaces it) */
+    footer {
+        display: none !important;
+    }
+    /* Larger click targets for pagination */
+    .pagination-link {
+        min-height: 44px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 8px 20px;
+    }
+    /* Card info area slightly larger tap target */
+    .card-info {
+        padding: 14px;
+    }
+    /* Better spacing for filters */
+    .filter-bar {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+    }
+    .filter-bar::-webkit-scrollbar {
+        display: none;
+    }
+}
+
+/* Disable text selection on buttons / nav items for app-feel */
+.mobile-tab-bar,
+.mobile-tab-bar a,
+button,
+[role="button"] {
+    user-select: none;
+    -webkit-user-select: none;
 }
